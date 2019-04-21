@@ -3,6 +3,8 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using LuckyMushroom.Models;
+using Microsoft.EntityFrameworkCore;
 
 namespace LuckyMushroom
 {
@@ -19,6 +21,8 @@ namespace LuckyMushroom
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_1);
+            services.AddDbContext<LuckyMushroomContext>(options =>
+                options.UseSqlServer(Configuration.GetConnectionString("LuckyMushroomDatabase")));
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
