@@ -1,8 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using LuckyMushroom.Models;
@@ -82,7 +79,7 @@ namespace LuckyMushroom.Controllers
             return Ok(ResponsedRequest(recognitionRequest));
         }
 
-        [HttpPost]
+        [HttpPost("add")]
         public async Task<IActionResult> PostRecognitionRequest([FromBody] RecognitionRequest recognitionRequest)
         {
             if (!ModelState.IsValid)
@@ -96,7 +93,7 @@ namespace LuckyMushroom.Controllers
             return CreatedAtAction("GetRecognitionRequest", new { id = recognitionRequest.RequestId }, recognitionRequest);
         }
 
-        [HttpDelete]
+        [HttpDelete("delete")]
         public async Task<IActionResult> DeleteRecognitionRequest(uint id)
         {
             if (!ModelState.IsValid)

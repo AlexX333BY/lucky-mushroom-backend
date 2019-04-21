@@ -22,7 +22,7 @@ namespace LuckyMushroom.Controllers
             MaxLongitude = 180;
         }
 
-        [HttpGet("byGpsTag")]
+        [HttpGet]
         public async Task<IActionResult> GetArticle(int latitudeSeconds, int longitudeSeconds)
         {
             if (!ModelState.IsValid)
