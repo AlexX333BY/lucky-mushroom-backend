@@ -13,22 +13,22 @@ namespace LuckyMushroom.Models
         {
         }
 
-        public virtual DbSet<Articles> Articles { get; set; }
-        public virtual DbSet<ArticlesGpsTags> ArticlesGpsTags { get; set; }
-        public virtual DbSet<EdibleStatuses> EdibleStatuses { get; set; }
-        public virtual DbSet<GpsTags> GpsTags { get; set; }
-        public virtual DbSet<RecognitionRequests> RecognitionRequests { get; set; }
-        public virtual DbSet<RecognitionStatuses> RecognitionStatuses { get; set; }
-        public virtual DbSet<RequestPhotos> RequestPhotos { get; set; }
-        public virtual DbSet<Roles> Roles { get; set; }
+        public virtual DbSet<Article> Articles { get; set; }
+        public virtual DbSet<ArticleGpsTag> ArticlesGpsTags { get; set; }
+        public virtual DbSet<EdibleStatus> EdibleStatuses { get; set; }
+        public virtual DbSet<GpsTag> GpsTags { get; set; }
+        public virtual DbSet<RecognitionRequest> RecognitionRequests { get; set; }
+        public virtual DbSet<RecognitionStatus> RecognitionStatuses { get; set; }
+        public virtual DbSet<RequestPhoto> RequestPhotos { get; set; }
+        public virtual DbSet<Role> Roles { get; set; }
         public virtual DbSet<UserCredentials> UserCredentials { get; set; }
-        public virtual DbSet<Users> Users { get; set; }
+        public virtual DbSet<User> Users { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.HasAnnotation("ProductVersion", "2.2.4-servicing-10062");
 
-            modelBuilder.Entity<Articles>(entity =>
+            modelBuilder.Entity<Article>(entity =>
             {
                 entity.HasKey(e => e.ArticleId);
 
@@ -47,7 +47,7 @@ namespace LuckyMushroom.Models
                     .IsUnicode(false);
             });
 
-            modelBuilder.Entity<ArticlesGpsTags>(entity =>
+            modelBuilder.Entity<ArticleGpsTag>(entity =>
             {
                 entity.HasKey(e => new { e.TagId, e.ArticleId });
 
@@ -75,7 +75,7 @@ namespace LuckyMushroom.Models
                     .HasConstraintName("FK_articles_gps_tags_gps_tags");
             });
 
-            modelBuilder.Entity<EdibleStatuses>(entity =>
+            modelBuilder.Entity<EdibleStatus>(entity =>
             {
                 entity.HasKey(e => e.EdibleStatusId);
 
@@ -103,7 +103,7 @@ namespace LuckyMushroom.Models
                     .HasColumnType("enum('edible','partial-edible','non-edible')");
             });
 
-            modelBuilder.Entity<GpsTags>(entity =>
+            modelBuilder.Entity<GpsTag>(entity =>
             {
                 entity.HasKey(e => e.TagId);
 
@@ -131,7 +131,7 @@ namespace LuckyMushroom.Models
                     .HasColumnType("int(10) unsigned");
             });
 
-            modelBuilder.Entity<RecognitionRequests>(entity =>
+            modelBuilder.Entity<RecognitionRequest>(entity =>
             {
                 entity.HasKey(e => e.RequestId);
 
@@ -187,7 +187,7 @@ namespace LuckyMushroom.Models
                     .HasConstraintName("FK_recognition_requests_recognition_statuses");
             });
 
-            modelBuilder.Entity<RecognitionStatuses>(entity =>
+            modelBuilder.Entity<RecognitionStatus>(entity =>
             {
                 entity.HasKey(e => e.StatusId);
 
@@ -215,7 +215,7 @@ namespace LuckyMushroom.Models
                     .IsUnicode(false);
             });
 
-            modelBuilder.Entity<RequestPhotos>(entity =>
+            modelBuilder.Entity<RequestPhoto>(entity =>
             {
                 entity.HasKey(e => e.PhotoId);
 
@@ -245,7 +245,7 @@ namespace LuckyMushroom.Models
                     .HasConstraintName("FK_request_photo_recognition_request");
             });
 
-            modelBuilder.Entity<Roles>(entity =>
+            modelBuilder.Entity<Role>(entity =>
             {
                 entity.HasKey(e => e.RoleId);
 
@@ -308,7 +308,7 @@ namespace LuckyMushroom.Models
                     .HasConstraintName("FK_user_credentials_users");
             });
 
-            modelBuilder.Entity<Users>(entity =>
+            modelBuilder.Entity<User>(entity =>
             {
                 entity.HasKey(e => e.UserId);
 
