@@ -11,7 +11,7 @@ namespace LuckyMushroom.Models
 
         public string StatusAlias { get; set; }
         public string StatusName { get; set; }
-        public int StatusId { get; set; }
+        public uint StatusId { get; set; }
 
         public virtual ICollection<RecognitionRequest> RecognitionRequests { get; set; }
     }

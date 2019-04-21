@@ -2,9 +2,9 @@
 {
     public class RequestPhoto
     {
-        public int PhotoId { get; set; }
+        public uint PhotoId { get; set; }
         public string PhotoFilename { get; set; }
-        public int? RequestId { get; set; }
+        public uint? RequestId { get; set; }
 
         public virtual RecognitionRequest Request { get; set; }
     }
