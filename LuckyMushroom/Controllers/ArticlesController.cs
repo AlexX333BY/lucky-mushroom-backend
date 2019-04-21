@@ -4,11 +4,13 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using LuckyMushroom.Models;
+using Microsoft.AspNetCore.Authorization;
 
 namespace LuckyMushroom.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class ArticlesController : ControllerBase
     {
         private readonly LuckyMushroomContext _context;
@@ -23,6 +25,7 @@ namespace LuckyMushroom.Controllers
         }
 
         [HttpGet]
+        [AllowAnonymous]
         public async Task<IActionResult> GetArticle(int latitudeSeconds, int longitudeSeconds)
         {
             if (!ModelState.IsValid)
@@ -32,7 +35,7 @@ namespace LuckyMushroom.Controllers
 
             if ((Math.Abs(latitudeSeconds) > MaxLatitude) || (Math.Abs(longitudeSeconds) > MaxLongitude))
             {
-                return BadRequest();
+                return BadRequest("Not existing place");
             }
 
             int maxLatitudeDistance = MaxLatitude * 2, maxLongitudeDistance = MaxLongitude * 2;
@@ -56,6 +59,11 @@ namespace LuckyMushroom.Controllers
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
+            }
+
+            if (!User.IsInRole("admin"))
+            {
+                return Forbid();
             }
 
             if ((Math.Abs(latitude) > MaxLatitude) || (Math.Abs(longitude) > MaxLongitude))
@@ -92,6 +100,11 @@ namespace LuckyMushroom.Controllers
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
+            }
+
+            if (!User.IsInRole("admin"))
+            {
+                return Forbid();
             }
 
             var article = await _context.Articles.FindAsync(id);

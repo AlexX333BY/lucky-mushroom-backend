@@ -34,7 +34,7 @@ namespace LuckyMushroom.Controllers
             }
 
             const byte hashLength = 128;
-            string trimmedEmail = email.Trim(), trimmedPasswordHash = sha512PasswordHash.Trim().ToUpper();
+            string trimmedEmail = email.Trim().ToLower(), trimmedPasswordHash = sha512PasswordHash.Trim().ToUpper();
 
             if ((trimmedEmail.Length == 0) || (trimmedPasswordHash.Length != hashLength))
             {
@@ -58,7 +58,7 @@ namespace LuckyMushroom.Controllers
                     await _context.SaveChangesAsync();
 
                     transaction.Commit();
-                    await Authenticate(trimmedEmail);
+                    await Authenticate(newUser);
 
                     return Created("signup", newUser);
                 }
@@ -79,16 +79,18 @@ namespace LuckyMushroom.Controllers
             }
 
             const byte hashLength = 128;
-            string trimmedEmail = email.Trim(), trimmedPasswordHash = sha512PasswordHash.Trim().ToUpper();
+            string trimmedEmail = email.Trim().ToLower(), trimmedPasswordHash = sha512PasswordHash.Trim().ToUpper();
 
             if ((trimmedEmail.Length == 0) || (trimmedPasswordHash.Length != hashLength))
             {
                 return BadRequest("Illegal login data");
             }
 
-            if ((await _context.UserCredentials.Where((creds) => creds.UserMail == trimmedEmail && creds.UserPasswordHash == trimmedPasswordHash).SingleOrDefaultAsync()) != null)
+            UserCredentials authorizedCreds = await _context.UserCredentials
+                .Where((creds) => creds.UserMail == trimmedEmail && creds.UserPasswordHash == trimmedPasswordHash).SingleOrDefaultAsync();
+            if (authorizedCreds != null)
             {
-                await Authenticate(trimmedEmail);
+                await Authenticate(authorizedCreds.User);
                 return Ok();
             }
             else
@@ -105,14 +107,14 @@ namespace LuckyMushroom.Controllers
         }
 
         [HttpDelete("delete")]
-        public async Task<IActionResult> DeleteUser(string email)
+        public async Task<IActionResult> DeleteUser()
         {
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
             }
 
-            var deletedUser = await _context.Users.Where((user) => user.UserCredentials.UserMail == email).SingleOrDefaultAsync();
+            var deletedUser = await _context.Users.Where((user) => user.UserCredentials.UserMail == User.Identity.Name).SingleOrDefaultAsync();
             if (deletedUser == null)
             {
                 return NotFound();
@@ -121,14 +123,15 @@ namespace LuckyMushroom.Controllers
             _context.Users.Remove(deletedUser);
             await _context.SaveChangesAsync();
 
-            return Ok(deletedUser);
+            return await LogOut();
         }
 
-        private async Task Authenticate(string email)
+        private async Task Authenticate(User user)
         {
             var claims = new List<Claim>
             {
-                new Claim(ClaimsIdentity.DefaultNameClaimType, email)
+                new Claim(ClaimsIdentity.DefaultNameClaimType, user.UserCredentials.UserMail),
+                new Claim(ClaimsIdentity.DefaultRoleClaimType, user.Role.RoleAlias)
             };
             ClaimsIdentity id = new ClaimsIdentity(claims, "ApplicationCookie", ClaimsIdentity.DefaultNameClaimType, ClaimsIdentity.DefaultRoleClaimType);
             await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, new ClaimsPrincipal(id));

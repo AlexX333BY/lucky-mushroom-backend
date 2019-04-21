@@ -3,11 +3,13 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using LuckyMushroom.Models;
+using Microsoft.AspNetCore.Authorization;
 
 namespace LuckyMushroom.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class RecognitionRequestsController : ControllerBase
     {
         private readonly LuckyMushroomContext _context;
@@ -23,11 +25,10 @@ namespace LuckyMushroom.Controllers
             return (request.RequestId, request.RequestDatetime, request.EdibleStatus.EdibleDescription, request.Status.StatusName);
         }
 
-        // GET: api/RecognitionRequests
         [HttpGet]
         public async Task<IActionResult> GetRecognitionRequests(string edibleStatusAlias = null, string recognitionStatusAlias = null)
         {
-            IQueryable<RecognitionRequest> requests = _context.RecognitionRequests;
+            IQueryable<RecognitionRequest> requests = _context.RecognitionRequests.Where((request) => request.Requester.UserCredentials.UserMail == User.Identity.Name);
 
             if (edibleStatusAlias != null)
             {
@@ -69,11 +70,16 @@ namespace LuckyMushroom.Controllers
                 return BadRequest(ModelState);
             }
 
-            var recognitionRequest = await _context.RecognitionRequests.FindAsync(id);
+            RecognitionRequest recognitionRequest = await _context.RecognitionRequests.FindAsync(id);
 
             if (recognitionRequest == null)
             {
                 return NotFound();
+            }
+
+            if (recognitionRequest.Requester.UserCredentials.UserMail != User.Identity.Name)
+            {
+                return Forbid();
             }
 
             return Ok(ResponsedRequest(recognitionRequest));
@@ -101,10 +107,15 @@ namespace LuckyMushroom.Controllers
                 return BadRequest(ModelState);
             }
 
-            var recognitionRequest = await _context.RecognitionRequests.FindAsync(id);
+            RecognitionRequest recognitionRequest = await _context.RecognitionRequests.FindAsync(id);
             if (recognitionRequest == null)
             {
                 return NotFound();
+            }
+
+            if (recognitionRequest.Requester.UserCredentials.UserMail != User.Identity.Name)
+            {
+                return Forbid();
             }
 
             _context.RecognitionRequests.Remove(recognitionRequest);
