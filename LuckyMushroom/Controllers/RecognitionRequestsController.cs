@@ -32,34 +32,15 @@ namespace LuckyMushroom.Controllers
 
             if (edibleStatusAlias != null)
             {
-                EdibleStatus edibleStatus = await _context.EdibleStatuses.Where((status) => status.EdibleStatusAlias == edibleStatusAlias).FirstOrDefaultAsync();
-
-                if (edibleStatus != null)
-                {
-                    requests = requests.Where((request) => request.EdibleStatusId == edibleStatus.EdibleStatusId);
-                }
-                else
-                {
-                    return NotFound(edibleStatusAlias);
-                }
+                requests = requests.Where((request) => request.EdibleStatus.EdibleStatusAlias == edibleStatusAlias);
             }
 
             if (recognitionStatusAlias != null)
             {
-                RecognitionStatus recognitionStatus = await _context.RecognitionStatuses.Where((status) => status.StatusAlias == recognitionStatusAlias).FirstOrDefaultAsync();
-
-                if (recognitionStatus != null)
-                {
-                    requests = requests.Where((request) => request.StatusId == recognitionStatus.StatusId);
-                }
-                else
-                {
-                    return NotFound(recognitionStatusAlias);
-                }
+                requests = requests.Where((request) => request.Status.StatusAlias == recognitionStatusAlias);
             }
 
-            return Ok((await requests.ToArrayAsync())
-                .Select((request) => ResponsedRequest(request)));
+            return Ok((await requests.ToArrayAsync()).Select((request) => ResponsedRequest(request)));
         }
 
         [HttpGet]

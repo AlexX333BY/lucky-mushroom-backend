@@ -54,7 +54,7 @@ namespace LuckyMushroom.Controllers
         }
 
         [HttpPost("add")]
-        public async Task<IActionResult> PostArticle([FromBody] string text, [FromBody] int latitude, [FromBody] int longitude)
+        public async Task<IActionResult> AddArticle([FromBody] string text, [FromBody] int latitude, [FromBody] int longitude)
         {
             if (!ModelState.IsValid)
             {
@@ -68,29 +68,22 @@ namespace LuckyMushroom.Controllers
 
             if ((Math.Abs(latitude) > MaxLatitude) || (Math.Abs(longitude) > MaxLongitude))
             {
-                return BadRequest();
+                return BadRequest("Not existing place");
             }
 
             using (var transaction = _context.Database.BeginTransaction())
             {
-                try
-                {
-                    uint dbTagId = ((await _context.GpsTags.SingleOrDefaultAsync((tag) => tag.LatitudeSeconds == latitude && tag.LongitudeSeconds == longitude))
-                        ?? (await _context.GpsTags.AddAsync(new GpsTag() { LatitudeSeconds = latitude, LongitudeSeconds = longitude })).Entity).TagId;
+                uint dbTagId = ((await _context.GpsTags.SingleOrDefaultAsync((tag) => tag.LatitudeSeconds == latitude && tag.LongitudeSeconds == longitude))
+                    ?? (await _context.GpsTags.AddAsync(new GpsTag() { LatitudeSeconds = latitude, LongitudeSeconds = longitude })).Entity).TagId;
 
-                    Article newArticle = (await _context.Articles.AddAsync(new Article() { ArticleText = text })).Entity;
+                Article newArticle = (await _context.Articles.AddAsync(new Article() { ArticleText = text })).Entity;
 
-                    await _context.ArticlesGpsTags.AddAsync(new ArticleGpsTag { ArticleId = newArticle.ArticleId, TagId = dbTagId });
-                    await _context.SaveChangesAsync();
+                await _context.ArticlesGpsTags.AddAsync(new ArticleGpsTag { ArticleId = newArticle.ArticleId, TagId = dbTagId });
+                await _context.SaveChangesAsync();
 
-                    transaction.Commit();
+                transaction.Commit();
 
-                    return Ok((newArticle.ArticleId, newArticle.ArticleText));
-                }
-                catch (Exception e)
-                {
-                    return BadRequest(e.Message);
-                }
+                return Ok((newArticle.ArticleId, newArticle.ArticleText));
             }
         }
 

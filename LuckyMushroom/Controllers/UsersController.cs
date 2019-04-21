@@ -43,29 +43,22 @@ namespace LuckyMushroom.Controllers
 
             using (var transaction = _context.Database.BeginTransaction())
             {
-                try
+                if (await _context.UserCredentials.AnyAsync((creds) => creds.UserMail == trimmedEmail))
                 {
-                    if (await _context.UserCredentials.AnyAsync((creds) => creds.UserMail == trimmedEmail))
-                    {
-                        return BadRequest("Email already exists");
-                    }
-
-                    Role newUserRole = await _context.Roles.Where((role) => role.RoleAlias == "user").FirstAsync();
-
-                    User newUser = (await _context.Users.AddAsync(new User() { RoleId = newUserRole.RoleId })).Entity;
-
-                    await _context.UserCredentials.AddAsync(new UserCredentials() { UserId = newUser.UserId, UserMail = trimmedEmail, UserPasswordHash = trimmedPasswordHash });
-                    await _context.SaveChangesAsync();
-
-                    transaction.Commit();
-                    await Authenticate(newUser);
-
-                    return Created("signup", newUser);
+                    return BadRequest("Email already exists");
                 }
-                catch (Exception e)
-                {
-                    return BadRequest(e.Message);
-                }
+
+                Role newUserRole = await _context.Roles.Where((role) => role.RoleAlias == "user").FirstAsync();
+
+                User newUser = (await _context.Users.AddAsync(new User() { RoleId = newUserRole.RoleId })).Entity;
+
+                await _context.UserCredentials.AddAsync(new UserCredentials() { UserId = newUser.UserId, UserMail = trimmedEmail, UserPasswordHash = trimmedPasswordHash });
+                await _context.SaveChangesAsync();
+
+                transaction.Commit();
+                await Authenticate(newUser);
+
+                return Created("signup", newUser);
             }
         }
 
