@@ -10,8 +10,8 @@ namespace LuckyMushroom.Models
         }
 
         public uint TagId { get; set; }
-        public uint SecondsNorth { get; set; }
-        public uint SecondsWest { get; set; }
+        public int Latitude { get; set; }
+        public int Longitude { get; set; }
 
         public virtual ICollection<ArticleGpsTag> ArticlesGpsTags { get; set; }
     }

@@ -109,11 +109,11 @@ namespace LuckyMushroom.Models
 
                 entity.ToTable("gps_tags", "lucky_mushroom");
 
-                entity.HasIndex(e => e.SecondsNorth)
-                    .HasName("IX_seconds_north");
+                entity.HasIndex(e => e.Latitude)
+                    .HasName("IX_latitude");
 
-                entity.HasIndex(e => e.SecondsWest)
-                    .HasName("IX_seconds_west");
+                entity.HasIndex(e => e.Longitude)
+                    .HasName("IX_longitude");
 
                 entity.HasIndex(e => e.TagId)
                     .HasName("IX_gps_tags");
@@ -122,13 +122,13 @@ namespace LuckyMushroom.Models
                     .HasColumnName("tag_id")
                     .HasColumnType("int(10) unsigned");
 
-                entity.Property(e => e.SecondsNorth)
-                    .HasColumnName("seconds_north")
-                    .HasColumnType("int(10) unsigned");
+                entity.Property(e => e.Latitude)
+                    .HasColumnName("latitude")
+                    .HasColumnType("int(11)");
 
-                entity.Property(e => e.SecondsWest)
-                    .HasColumnName("seconds_west")
-                    .HasColumnType("int(10) unsigned");
+                entity.Property(e => e.Longitude)
+                    .HasColumnName("longitude")
+                    .HasColumnType("int(11)");
             });
 
             modelBuilder.Entity<RecognitionRequest>(entity =>
