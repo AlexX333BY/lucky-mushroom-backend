@@ -4,11 +4,17 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using LuckyMushroom.Models;
+using Microsoft.AspNetCore.Authorization;
+using System.Collections.Generic;
+using System.Security.Claims;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
 
 namespace LuckyMushroom.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class UsersController : ControllerBase
     {
         private readonly LuckyMushroomContext _context;
@@ -18,6 +24,7 @@ namespace LuckyMushroom.Controllers
             _context = context;
         }
 
+        [AllowAnonymous]
         [HttpPost("signup")]
         public async Task<IActionResult> SignUp([FromBody] string email, [FromBody] string sha512PasswordHash)
         {
@@ -27,7 +34,7 @@ namespace LuckyMushroom.Controllers
             }
 
             const byte hashLength = 128;
-            string trimmedEmail = email.Trim(), trimmedPasswordHash = sha512PasswordHash.Trim();
+            string trimmedEmail = email.Trim(), trimmedPasswordHash = sha512PasswordHash.Trim().ToUpper();
 
             if ((trimmedEmail.Length == 0) || (trimmedPasswordHash.Length != hashLength))
             {
@@ -51,6 +58,7 @@ namespace LuckyMushroom.Controllers
                     await _context.SaveChangesAsync();
 
                     transaction.Commit();
+                    await Authenticate(trimmedEmail);
 
                     return Created("signup", newUser);
                 }
@@ -61,6 +69,7 @@ namespace LuckyMushroom.Controllers
             }
         }
 
+        [AllowAnonymous]
         [HttpPost("login")]
         public async Task<IActionResult> LogIn([FromBody] string email, [FromBody] string sha512PasswordHash)
         {
@@ -70,7 +79,7 @@ namespace LuckyMushroom.Controllers
             }
 
             const byte hashLength = 128;
-            string trimmedEmail = email.Trim(), trimmedPasswordHash = sha512PasswordHash.Trim();
+            string trimmedEmail = email.Trim(), trimmedPasswordHash = sha512PasswordHash.Trim().ToUpper();
 
             if ((trimmedEmail.Length == 0) || (trimmedPasswordHash.Length != hashLength))
             {
@@ -79,12 +88,20 @@ namespace LuckyMushroom.Controllers
 
             if ((await _context.UserCredentials.Where((creds) => creds.UserMail == trimmedEmail && creds.UserPasswordHash == trimmedPasswordHash).SingleOrDefaultAsync()) != null)
             {
+                await Authenticate(trimmedEmail);
                 return Ok();
             }
             else
             {
                 return Unauthorized();
             }
+        }
+
+        [HttpPost("logout")]
+        public async Task<IActionResult> LogOut()
+        {
+            await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+            return Ok();
         }
 
         [HttpDelete("delete")]
@@ -105,6 +122,16 @@ namespace LuckyMushroom.Controllers
             await _context.SaveChangesAsync();
 
             return Ok(deletedUser);
+        }
+
+        private async Task Authenticate(string email)
+        {
+            var claims = new List<Claim>
+            {
+                new Claim(ClaimsIdentity.DefaultNameClaimType, email)
+            };
+            ClaimsIdentity id = new ClaimsIdentity(claims, "ApplicationCookie", ClaimsIdentity.DefaultNameClaimType, ClaimsIdentity.DefaultRoleClaimType);
+            await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, new ClaimsPrincipal(id));
         }
     }
 }
