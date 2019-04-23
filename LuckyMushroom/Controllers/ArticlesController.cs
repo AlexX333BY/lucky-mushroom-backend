@@ -109,7 +109,7 @@ namespace LuckyMushroom.Controllers
             _context.Articles.Remove(article);
             await _context.SaveChangesAsync();
 
-            return Ok(article);
+            return Ok((article.ArticleId, article.ArticleText));
         }
     }
 }

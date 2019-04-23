@@ -58,7 +58,7 @@ namespace LuckyMushroom.Controllers
                 transaction.Commit();
                 await Authenticate(newUser);
 
-                return Created("signup", newUser);
+                return Created("signup", (newUser.UserId, newUser.UserCredentials.UserMail));
             }
         }
 
@@ -84,7 +84,7 @@ namespace LuckyMushroom.Controllers
             if (authorizedCreds != null)
             {
                 await Authenticate(authorizedCreds.User);
-                return Ok();
+                return Ok((authorizedCreds.UserId, authorizedCreds.UserMail));
             }
             else
             {
