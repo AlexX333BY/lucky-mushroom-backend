@@ -77,7 +77,7 @@ namespace LuckyMushroom.Controllers
             _context.RecognitionRequests.Add(recognitionRequest);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction("GetRecognitionRequest", new { id = recognitionRequest.RequestId }, recognitionRequest);
+            return CreatedAtAction(nameof(PostRecognitionRequest), new { id = recognitionRequest.RequestId }, ResponsedRequest(recognitionRequest));
         }
 
         [HttpDelete("delete")]

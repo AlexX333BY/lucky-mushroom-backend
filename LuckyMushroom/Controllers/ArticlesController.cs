@@ -48,13 +48,13 @@ namespace LuckyMushroom.Controllers
                 return Math.Sqrt(Math.Pow(normalizedLatitudeDistance, 2) + Math.Pow(normalizedLongitudeDistance, 2));
             }).First();
 
-            var articles = (await _context.ArticlesGpsTags.Where((agt) => agt.TagId == nearestGpsTag.TagId).ToArrayAsync()).Select((agt) => (agt.ArticleId, agt.Article.ArticleText));
+            var articles = await _context.ArticlesGpsTags.Where((agt) => agt.TagId == nearestGpsTag.TagId).ToArrayAsync();
 
             return Ok(articles);
         }
 
         [HttpPost("add")]
-        public async Task<IActionResult> AddArticle([FromBody] string text, [FromBody] int latitude, [FromBody] int longitude)
+        public async Task<IActionResult> AddArticle([FromBody] ArticleGpsTag articleTag)
         {
             if (!ModelState.IsValid)
             {
@@ -64,6 +64,14 @@ namespace LuckyMushroom.Controllers
             if (!User.IsInRole("admin"))
             {
                 return Forbid();
+            }
+
+            int latitude = articleTag.Tag.LatitudeSeconds, longitude = articleTag.Tag.LongitudeSeconds;
+            string articleText = articleTag.Article.ArticleText;
+
+            if (articleText == null)
+            {
+                return BadRequest("You should specify article text");
             }
 
             if ((Math.Abs(latitude) > MaxLatitude) || (Math.Abs(longitude) > MaxLongitude))
@@ -76,14 +84,14 @@ namespace LuckyMushroom.Controllers
                 uint dbTagId = ((await _context.GpsTags.SingleOrDefaultAsync((tag) => tag.LatitudeSeconds == latitude && tag.LongitudeSeconds == longitude))
                     ?? (await _context.GpsTags.AddAsync(new GpsTag() { LatitudeSeconds = latitude, LongitudeSeconds = longitude })).Entity).TagId;
 
-                Article newArticle = (await _context.Articles.AddAsync(new Article() { ArticleText = text })).Entity;
+                Article newArticle = (await _context.Articles.AddAsync(new Article() { ArticleText = articleText })).Entity;
 
                 await _context.ArticlesGpsTags.AddAsync(new ArticleGpsTag { ArticleId = newArticle.ArticleId, TagId = dbTagId });
                 await _context.SaveChangesAsync();
 
                 transaction.Commit();
 
-                return Ok((newArticle.ArticleId, newArticle.ArticleText));
+                return Ok(newArticle);
             }
         }
 
@@ -109,7 +117,7 @@ namespace LuckyMushroom.Controllers
             _context.Articles.Remove(article);
             await _context.SaveChangesAsync();
 
-            return Ok((article.ArticleId, article.ArticleText));
+            return Ok(article);
         }
     }
 }

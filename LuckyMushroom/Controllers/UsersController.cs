@@ -26,7 +26,7 @@ namespace LuckyMushroom.Controllers
 
         [AllowAnonymous]
         [HttpPost("signup")]
-        public async Task<IActionResult> SignUp([FromBody] string email, [FromBody] string sha512PasswordHash)
+        public async Task<IActionResult> SignUp([FromBody] UserCredentials userCredentials)
         {
             if (!ModelState.IsValid)
             {
@@ -34,9 +34,9 @@ namespace LuckyMushroom.Controllers
             }
 
             const byte hashLength = 128;
-            string trimmedEmail = email.Trim().ToLower(), trimmedPasswordHash = sha512PasswordHash.Trim().ToUpper();
+            string trimmedEmail = userCredentials.UserMail?.Trim().ToLower(), trimmedPasswordHash = userCredentials.UserPasswordHash?.Trim().ToUpper();
 
-            if ((trimmedEmail.Length == 0) || (trimmedPasswordHash.Length != hashLength))
+            if ((trimmedEmail == null) || (trimmedPasswordHash == null) || (trimmedEmail.Length == 0) || (trimmedPasswordHash.Length != hashLength))
             {
                 return BadRequest("Illegal register data");
             }
@@ -58,13 +58,13 @@ namespace LuckyMushroom.Controllers
                 transaction.Commit();
                 await Authenticate(newUser);
 
-                return Created("signup", (newUser.UserId, newUser.UserCredentials.UserMail));
+                return Created("signup", newUser);
             }
         }
 
         [AllowAnonymous]
         [HttpPost("login")]
-        public async Task<IActionResult> LogIn([FromBody] string email, [FromBody] string sha512PasswordHash)
+        public async Task<IActionResult> LogIn([FromBody] UserCredentials userCredentials)
         {
             if (!ModelState.IsValid)
             {
@@ -72,9 +72,9 @@ namespace LuckyMushroom.Controllers
             }
 
             const byte hashLength = 128;
-            string trimmedEmail = email.Trim().ToLower(), trimmedPasswordHash = sha512PasswordHash.Trim().ToUpper();
+            string trimmedEmail = userCredentials.UserMail?.Trim().ToLower(), trimmedPasswordHash = userCredentials.UserPasswordHash?.Trim().ToUpper();
 
-            if ((trimmedEmail.Length == 0) || (trimmedPasswordHash.Length != hashLength))
+            if ((trimmedEmail == null) || (trimmedPasswordHash == null) || (trimmedEmail.Length == 0) || (trimmedPasswordHash.Length != hashLength))
             {
                 return BadRequest("Illegal login data");
             }
@@ -84,7 +84,7 @@ namespace LuckyMushroom.Controllers
             if (authorizedCreds != null)
             {
                 await Authenticate(authorizedCreds.User);
-                return Ok((authorizedCreds.UserId, authorizedCreds.UserMail));
+                return Ok(authorizedCreds.User);
             }
             else
             {
