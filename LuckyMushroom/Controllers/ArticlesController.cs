@@ -46,9 +46,9 @@ namespace LuckyMushroom.Controllers
                 int normalizedLatitudeDistance = Math.Min(latitudeDistance, Math.Abs(maxLatitudeDistance - latitudeDistance)),
                     normalizedLongitudeDistance = Math.Min(longitudeDistance, Math.Abs(maxLongitudeDistance - longitudeDistance));
                 return Math.Sqrt(Math.Pow(normalizedLatitudeDistance, 2) + Math.Pow(normalizedLongitudeDistance, 2));
-            }).First();
+            }).FirstOrDefault();
 
-            var articles = await _context.ArticlesGpsTags.Where((agt) => agt.TagId == nearestGpsTag.TagId).ToArrayAsync();
+            var articles = nearestGpsTag == null ? null : nearestGpsTag.ArticlesGpsTags.Select((articleTag) => articleTag.Article);
 
             return Ok(articles);
         }
