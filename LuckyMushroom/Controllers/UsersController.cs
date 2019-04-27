@@ -14,7 +14,7 @@ namespace LuckyMushroom.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize]
+    [Authorize(AuthenticationSchemes = CookieAuthenticationDefaults.AuthenticationScheme)]
     public class UsersController : ControllerBase
     {
         private readonly LuckyMushroomContext _context;
@@ -121,7 +121,7 @@ namespace LuckyMushroom.Controllers
                 return BadRequest(ModelState);
             }
 
-            var deletedUser = await _context.Users.Where((user) => user.UserCredentials.UserMail == User.Identity.Name).SingleOrDefaultAsync();
+            var deletedUser = _context.Users.Where((user) => user.UserCredentials.UserMail == User.Identity.Name).SingleOrDefault();
             if (deletedUser == null)
             {
                 return NotFound();
