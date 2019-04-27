@@ -38,7 +38,8 @@ namespace LuckyMushroom.Models
                 entity.ToTable("articles", "lucky_mushroom");
 
                 entity.HasIndex(e => e.ArticleId)
-                    .HasName("IX_article_id");
+                    .HasName("IX_article_id")
+                    .IsUnique();
 
                 entity.Property(e => e.ArticleId)
                     .HasColumnName("article_id")
@@ -85,10 +86,12 @@ namespace LuckyMushroom.Models
                 entity.ToTable("edible_statuses", "lucky_mushroom");
 
                 entity.HasIndex(e => e.EdibleStatusAlias)
-                    .HasName("IX_edible_status_alias");
+                    .HasName("IX_edible_status_alias")
+                    .IsUnique();
 
                 entity.HasIndex(e => e.EdibleStatusId)
-                    .HasName("IX_edible_status_id");
+                    .HasName("IX_edible_status_id")
+                    .IsUnique();
 
                 entity.Property(e => e.EdibleStatusId)
                     .HasColumnName("edible_status_id")
@@ -119,7 +122,8 @@ namespace LuckyMushroom.Models
                     .HasName("IX_longitude_seconds");
 
                 entity.HasIndex(e => e.TagId)
-                    .HasName("IX_gps_tags");
+                    .HasName("IX_gps_tags")
+                    .IsUnique();
 
                 entity.Property(e => e.TagId)
                     .HasColumnName("tag_id")
@@ -144,7 +148,8 @@ namespace LuckyMushroom.Models
                     .HasName("IXFK_recognition_requests_edible_statuses");
 
                 entity.HasIndex(e => e.RequestDatetime)
-                    .HasName("IX_request_datetime");
+                    .HasName("IX_request_datetime")
+                    .IsUnique();
 
                 entity.HasIndex(e => e.RequestId)
                     .HasName("IX_request_id");
@@ -197,10 +202,12 @@ namespace LuckyMushroom.Models
                 entity.ToTable("recognition_statuses", "lucky_mushroom");
 
                 entity.HasIndex(e => e.StatusAlias)
-                    .HasName("IX_status_alias");
+                    .HasName("IX_status_alias")
+                    .IsUnique();
 
                 entity.HasIndex(e => e.StatusId)
-                    .HasName("IX_status_id");
+                    .HasName("IX_status_id")
+                    .IsUnique();
 
                 entity.Property(e => e.StatusId)
                     .HasColumnName("status_id")
@@ -255,10 +262,12 @@ namespace LuckyMushroom.Models
                 entity.ToTable("roles", "lucky_mushroom");
 
                 entity.HasIndex(e => e.RoleAlias)
-                    .HasName("IX_role_alias");
+                    .HasName("IX_role_alias")
+                    .IsUnique();
 
                 entity.HasIndex(e => e.RoleId)
-                    .HasName("IX_role_id");
+                    .HasName("IX_role_id")
+                    .IsUnique();
 
                 entity.Property(e => e.RoleId)
                     .HasColumnName("role_id")
@@ -283,10 +292,12 @@ namespace LuckyMushroom.Models
                 entity.ToTable("user_credentials", "lucky_mushroom");
 
                 entity.HasIndex(e => e.UserId)
-                    .HasName("IXFK_user_credentials_users");
+                    .HasName("IXFK_user_credentials_users")
+                    .IsUnique();
 
                 entity.HasIndex(e => e.UserMail)
-                    .HasName("IX_user_mail");
+                    .HasName("IX_user_mail")
+                    .IsUnique();
 
                 entity.Property(e => e.UserId)
                     .HasColumnName("user_id")
@@ -321,7 +332,8 @@ namespace LuckyMushroom.Models
                     .HasName("IXFK_users_roles");
 
                 entity.HasIndex(e => e.UserId)
-                    .HasName("IX_user_id");
+                    .HasName("IX_user_id")
+                    .IsUnique();
 
                 entity.Property(e => e.UserId)
                     .HasColumnName("user_id")
