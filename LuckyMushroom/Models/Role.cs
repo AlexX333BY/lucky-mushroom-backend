@@ -11,7 +11,7 @@ namespace LuckyMushroom.Models
 
         public string RoleAlias { get; set; }
         public string RoleName { get; set; }
-        public uint RoleId { get; set; }
+        public int RoleId { get; set; }
 
         public virtual ICollection<User> Users { get; set; }
     }

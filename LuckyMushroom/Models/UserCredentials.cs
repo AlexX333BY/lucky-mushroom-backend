@@ -4,7 +4,7 @@
     {
         public string UserMail { get; set; }
         public string UserPasswordHash { get; set; }
-        public uint UserId { get; set; }
+        public int UserId { get; set; }
 
         public virtual User User { get; set; }
     }

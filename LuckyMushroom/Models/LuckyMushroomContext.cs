@@ -43,7 +43,7 @@ namespace LuckyMushroom.Models
 
                 entity.Property(e => e.ArticleId)
                     .HasColumnName("article_id")
-                    .HasColumnType("int(10) unsigned");
+                    .HasColumnType("int(10)");
 
                 entity.Property(e => e.ArticleText)
                     .IsRequired()
@@ -62,11 +62,11 @@ namespace LuckyMushroom.Models
 
                 entity.Property(e => e.TagId)
                     .HasColumnName("tag_id")
-                    .HasColumnType("int(10) unsigned");
+                    .HasColumnType("int(10)");
 
                 entity.Property(e => e.ArticleId)
                     .HasColumnName("article_id")
-                    .HasColumnType("int(10) unsigned");
+                    .HasColumnType("int(10)");
 
                 entity.HasOne(d => d.Article)
                     .WithMany(p => p.ArticlesGpsTags)
@@ -95,7 +95,7 @@ namespace LuckyMushroom.Models
 
                 entity.Property(e => e.EdibleStatusId)
                     .HasColumnName("edible_status_id")
-                    .HasColumnType("int(10) unsigned");
+                    .HasColumnType("int(10)");
 
                 entity.Property(e => e.EdibleDescription)
                     .IsRequired()
@@ -127,7 +127,7 @@ namespace LuckyMushroom.Models
 
                 entity.Property(e => e.TagId)
                     .HasColumnName("tag_id")
-                    .HasColumnType("int(10) unsigned");
+                    .HasColumnType("int(10)");
 
                 entity.Property(e => e.LatitudeSeconds)
                     .HasColumnName("latitude_seconds")
@@ -162,21 +162,21 @@ namespace LuckyMushroom.Models
 
                 entity.Property(e => e.RequestId)
                     .HasColumnName("request_id")
-                    .HasColumnType("int(10) unsigned");
+                    .HasColumnType("int(10)");
 
                 entity.Property(e => e.EdibleStatusId)
                     .HasColumnName("edible_status_id")
-                    .HasColumnType("int(10) unsigned");
+                    .HasColumnType("int(10)");
 
                 entity.Property(e => e.RequestDatetime).HasColumnName("request_datetime");
 
                 entity.Property(e => e.RequesterId)
                     .HasColumnName("requester_id")
-                    .HasColumnType("int(10) unsigned");
+                    .HasColumnType("int(10)");
 
                 entity.Property(e => e.StatusId)
                     .HasColumnName("status_id")
-                    .HasColumnType("int(10) unsigned");
+                    .HasColumnType("int(10)");
 
                 entity.HasOne(d => d.EdibleStatus)
                     .WithMany(p => p.RecognitionRequests)
@@ -211,7 +211,7 @@ namespace LuckyMushroom.Models
 
                 entity.Property(e => e.StatusId)
                     .HasColumnName("status_id")
-                    .HasColumnType("int(10) unsigned");
+                    .HasColumnType("int(10)");
 
                 entity.Property(e => e.StatusAlias)
                     .IsRequired()
@@ -236,7 +236,7 @@ namespace LuckyMushroom.Models
 
                 entity.Property(e => e.PhotoId)
                     .HasColumnName("photo_id")
-                    .HasColumnType("int(10) unsigned");
+                    .HasColumnType("int(10)");
 
                 entity.Property(e => e.PhotoFilename)
                     .IsRequired()
@@ -246,7 +246,7 @@ namespace LuckyMushroom.Models
 
                 entity.Property(e => e.RequestId)
                     .HasColumnName("request_id")
-                    .HasColumnType("int(10) unsigned");
+                    .HasColumnType("int(10)");
 
                 entity.HasOne(d => d.Request)
                     .WithMany(p => p.RequestPhotos)
@@ -271,7 +271,7 @@ namespace LuckyMushroom.Models
 
                 entity.Property(e => e.RoleId)
                     .HasColumnName("role_id")
-                    .HasColumnType("int(10) unsigned");
+                    .HasColumnType("int(10)");
 
                 entity.Property(e => e.RoleAlias)
                     .IsRequired()
@@ -301,7 +301,7 @@ namespace LuckyMushroom.Models
 
                 entity.Property(e => e.UserId)
                     .HasColumnName("user_id")
-                    .HasColumnType("int(10) unsigned")
+                    .HasColumnType("int(10)")
                     .ValueGeneratedNever();
 
                 entity.Property(e => e.UserMail)
@@ -337,11 +337,11 @@ namespace LuckyMushroom.Models
 
                 entity.Property(e => e.UserId)
                     .HasColumnName("user_id")
-                    .HasColumnType("int(10) unsigned");
+                    .HasColumnType("int(10)");
 
                 entity.Property(e => e.RoleId)
                     .HasColumnName("role_id")
-                    .HasColumnType("int(10) unsigned")
+                    .HasColumnType("int(10)")
                     .HasDefaultValueSql("0");
 
                 entity.HasOne(d => d.Role)

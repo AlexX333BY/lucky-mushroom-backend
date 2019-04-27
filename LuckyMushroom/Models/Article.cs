@@ -9,7 +9,7 @@ namespace LuckyMushroom.Models
             ArticlesGpsTags = new HashSet<ArticleGpsTag>();
         }
 
-        public uint ArticleId { get; set; }
+        public int ArticleId { get; set; }
         public string ArticleText { get; set; }
 
         public virtual ICollection<ArticleGpsTag> ArticlesGpsTags { get; set; }

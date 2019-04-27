@@ -11,7 +11,7 @@ namespace LuckyMushroom.Models
 
         public string EdibleStatusAlias { get; set; }
         public string EdibleDescription { get; set; }
-        public uint EdibleStatusId { get; set; }
+        public int EdibleStatusId { get; set; }
 
         public virtual ICollection<RecognitionRequest> RecognitionRequests { get; set; }
     }
