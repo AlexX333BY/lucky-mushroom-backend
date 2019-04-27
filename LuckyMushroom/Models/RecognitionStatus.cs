@@ -2,7 +2,7 @@
 
 namespace LuckyMushroom.Models
 {
-    public class RecognitionStatus
+    public partial class RecognitionStatus
     {
         public RecognitionStatus()
         {

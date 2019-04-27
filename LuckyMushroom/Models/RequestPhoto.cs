@@ -1,6 +1,6 @@
 ﻿namespace LuckyMushroom.Models
 {
-    public class RequestPhoto
+    public partial class RequestPhoto
     {
         public uint PhotoId { get; set; }
         public string PhotoFilename { get; set; }

@@ -2,7 +2,7 @@
 
 namespace LuckyMushroom.Models
 {
-    public class GpsTag
+    public partial class GpsTag
     {
         public GpsTag()
         {

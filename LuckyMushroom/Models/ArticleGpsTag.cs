@@ -1,6 +1,6 @@
 ﻿namespace LuckyMushroom.Models
 {
-    public class ArticleGpsTag
+    public partial class ArticleGpsTag
     {
         public uint TagId { get; set; }
         public uint ArticleId { get; set; }

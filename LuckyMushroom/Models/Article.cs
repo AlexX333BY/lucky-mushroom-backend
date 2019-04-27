@@ -2,7 +2,7 @@
 
 namespace LuckyMushroom.Models
 {
-    public class Article
+    public partial class Article
     {
         public Article()
         {

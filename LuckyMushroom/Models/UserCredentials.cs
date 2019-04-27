@@ -1,6 +1,6 @@
 ﻿namespace LuckyMushroom.Models
 {
-    public class UserCredentials
+    public partial class UserCredentials
     {
         public string UserMail { get; set; }
         public string UserPasswordHash { get; set; }

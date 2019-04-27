@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace LuckyMushroom.Models
 {
-    public class RecognitionRequest
+    public partial class RecognitionRequest
     {
         public RecognitionRequest()
         {
