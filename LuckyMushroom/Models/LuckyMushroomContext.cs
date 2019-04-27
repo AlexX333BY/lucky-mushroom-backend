@@ -2,16 +2,19 @@
 
 namespace LuckyMushroom.Models
 {
-    public class LuckyMushroomContext : DbContext
+    public partial class LuckyMushroomContext : DbContext
     {
-        public LuckyMushroomContext()
-        {
-        }
-
         public LuckyMushroomContext(DbContextOptions<LuckyMushroomContext> options)
             : base(options)
         {
         }
+
+        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+        {
+            optionsBuilder.UseMySQL(ConnectionString);
+        }
+
+        public static string ConnectionString { protected get; set; }
 
         public virtual DbSet<Article> Articles { get; set; }
         public virtual DbSet<ArticleGpsTag> ArticlesGpsTags { get; set; }

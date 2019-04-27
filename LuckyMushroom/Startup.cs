@@ -14,6 +14,7 @@ namespace LuckyMushroom
         public Startup(IConfiguration configuration)
         {
             Configuration = configuration;
+            LuckyMushroomContext.ConnectionString = Configuration.GetConnectionString("LuckyMushroomDatabase");
         }
 
         public IConfiguration Configuration { get; }
@@ -22,8 +23,7 @@ namespace LuckyMushroom
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_1);
-            services.AddDbContext<LuckyMushroomContext>(options =>
-                options.UseSqlServer(Configuration.GetConnectionString("LuckyMushroomDatabase")));
+            services.AddDbContext<LuckyMushroomContext>();
 
             services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme).AddCookie();
         }
