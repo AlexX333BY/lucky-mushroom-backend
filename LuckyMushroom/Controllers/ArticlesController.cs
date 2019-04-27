@@ -14,14 +14,14 @@ namespace LuckyMushroom.Controllers
     public class ArticlesController : ControllerBase
     {
         private readonly LuckyMushroomContext _context;
-        protected byte MaxLatitude { get; private set; }
-        protected byte MaxLongitude { get; private set; }
+        protected int MaxLatitudeSeconds { get; private set; }
+        protected int MaxLongitudeSeconds { get; private set; }
 
         public ArticlesController(LuckyMushroomContext context)
         {
             _context = context;
-            MaxLatitude = 90;
-            MaxLongitude = 180;
+            MaxLatitudeSeconds = 90 * 60 * 60;
+            MaxLongitudeSeconds = 180 * 60 * 60;
         }
 
         [HttpGet]
@@ -33,12 +33,12 @@ namespace LuckyMushroom.Controllers
                 return BadRequest(ModelState);
             }
 
-            if ((Math.Abs(latitudeSeconds) > MaxLatitude) || (Math.Abs(longitudeSeconds) > MaxLongitude))
+            if ((Math.Abs(latitudeSeconds) > MaxLatitudeSeconds) || (Math.Abs(longitudeSeconds) > MaxLongitudeSeconds))
             {
                 return BadRequest("Not existing place");
             }
 
-            int maxLatitudeDistance = MaxLatitude * 2, maxLongitudeDistance = MaxLongitude * 2;
+            int maxLatitudeDistance = MaxLatitudeSeconds * 2, maxLongitudeDistance = MaxLongitudeSeconds * 2;
             GpsTag nearestGpsTag = (await _context.GpsTags.ToArrayAsync()).OrderBy((tag) =>
             {
                 int latitudeDistance = Math.Abs(latitudeSeconds - tag.LatitudeSeconds),
@@ -74,7 +74,7 @@ namespace LuckyMushroom.Controllers
                 return BadRequest("You should specify article text");
             }
 
-            if ((Math.Abs(latitude) > MaxLatitude) || (Math.Abs(longitude) > MaxLongitude))
+            if ((Math.Abs(latitude) > MaxLatitudeSeconds) || (Math.Abs(longitude) > MaxLongitudeSeconds))
             {
                 return BadRequest("Not existing place");
             }
