@@ -43,22 +43,33 @@ namespace LuckyMushroom.Controllers
 
             using (var transaction = _context.Database.BeginTransaction())
             {
-                if (await _context.UserCredentials.AnyAsync((creds) => creds.UserMail == trimmedEmail))
+                /*  
+                    Exception is throwed if using just Any(Async):
+                        System.InvalidOperationException: "No coercion operator is defined between types 'System.Int16' and 'System.Boolean'."
+                    Seems to be Oracle connector problem
+                */
+                if (_context.UserCredentials.ToArray().Any((creds) => creds.UserMail == trimmedEmail))
                 {
                     return BadRequest("Email already exists");
                 }
 
-                Role newUserRole = await _context.Roles.Where((role) => role.RoleAlias == "user").FirstAsync();
+                Role newUserRole = _context.Roles.Where((role) => role.RoleAlias == "user").FirstOrDefault();
+                if (newUserRole == null)
+                {
+                    throw new Exception("Error creating user: no needed role");
+                }
 
-                User newUser = (await _context.Users.AddAsync(new User() { RoleId = newUserRole.RoleId })).Entity;
+                User newUser = _context.Users.Add(new User() { RoleId = newUserRole.RoleId }).Entity;
 
                 await _context.UserCredentials.AddAsync(new UserCredentials() { UserId = newUser.UserId, UserMail = trimmedEmail, UserPasswordHash = trimmedPasswordHash });
                 await _context.SaveChangesAsync();
 
                 transaction.Commit();
-                await Authenticate(newUser);
+                await Authenticate(_context.UserCredentials.Where((creds) => creds.UserId == newUser.UserId).Single(), newUserRole);
 
-                return Created("signup", newUser);
+                return Created(nameof(SignUp), new User { UserId = newUser.UserId, RoleId = newUser.UserId, 
+                    Role = new Role { RoleAlias = newUser.Role.RoleAlias, RoleName = newUser.Role.RoleName }, 
+                    UserCredentials = new UserCredentials { UserMail = newUser.UserCredentials.UserMail } });
             }
         }
 
@@ -79,16 +90,19 @@ namespace LuckyMushroom.Controllers
                 return BadRequest("Illegal login data");
             }
 
-            UserCredentials authorizedCreds = await _context.UserCredentials
-                .Where((creds) => creds.UserMail == trimmedEmail && creds.UserPasswordHash == trimmedPasswordHash).SingleOrDefaultAsync();
+            UserCredentials authorizedCreds = _context.UserCredentials
+                .Where((creds) => creds.UserMail == trimmedEmail && creds.UserPasswordHash == trimmedPasswordHash).SingleOrDefault();
             if (authorizedCreds != null)
             {
-                await Authenticate(authorizedCreds.User);
-                return Ok(authorizedCreds.User);
+                await Authenticate(
+                    authorizedCreds, 
+                    _context.Roles.Where((role) => role.RoleId == _context.Users.Where((user) => user.UserId == authorizedCreds.UserId).Single().RoleId).Single()
+                );
+                return Ok(authorizedCreds.UserMail);
             }
             else
             {
-                return Unauthorized();
+                return BadRequest("Illegal login data");
             }
         }
 
@@ -119,12 +133,12 @@ namespace LuckyMushroom.Controllers
             return await LogOut();
         }
 
-        private async Task Authenticate(User user)
+        private async Task Authenticate(UserCredentials creds, Role role)
         {
             var claims = new List<Claim>
             {
-                new Claim(ClaimsIdentity.DefaultNameClaimType, user.UserCredentials.UserMail),
-                new Claim(ClaimsIdentity.DefaultRoleClaimType, user.Role.RoleAlias)
+                new Claim(ClaimsIdentity.DefaultNameClaimType, creds.UserMail),
+                new Claim(ClaimsIdentity.DefaultRoleClaimType, role.RoleAlias)
             };
             ClaimsIdentity id = new ClaimsIdentity(claims, "ApplicationCookie", ClaimsIdentity.DefaultNameClaimType, ClaimsIdentity.DefaultRoleClaimType);
             await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, new ClaimsPrincipal(id));
