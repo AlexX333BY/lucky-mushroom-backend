@@ -9,6 +9,7 @@ using System.Collections.Generic;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using LuckyMushroom.DataTransferObjects;
 
 namespace LuckyMushroom.Controllers
 {
@@ -26,7 +27,7 @@ namespace LuckyMushroom.Controllers
 
         [AllowAnonymous]
         [HttpPost("signup")]
-        public async Task<IActionResult> SignUp([FromBody] UserCredentials userCredentials)
+        public async Task<IActionResult> SignUp([FromBody] UserCredentialsDto userCredentials)
         {
             if (!ModelState.IsValid)
             {
@@ -60,22 +61,21 @@ namespace LuckyMushroom.Controllers
                 }
 
                 User newUser = _context.Users.Add(new User() { RoleId = newUserRole.RoleId }).Entity;
+                newUser.Role = newUserRole;
+                newUser.UserCredentials = _context.UserCredentials.Add(new UserCredentials() { UserId = newUser.UserId, UserMail = trimmedEmail, UserPasswordHash = trimmedPasswordHash }).Entity;
 
-                await _context.UserCredentials.AddAsync(new UserCredentials() { UserId = newUser.UserId, UserMail = trimmedEmail, UserPasswordHash = trimmedPasswordHash });
                 await _context.SaveChangesAsync();
-
                 transaction.Commit();
-                await Authenticate(_context.UserCredentials.Where((creds) => creds.UserId == newUser.UserId).Single(), newUserRole);
 
-                return Created(nameof(SignUp), new User { UserId = newUser.UserId, RoleId = newUser.UserId, 
-                    Role = new Role { RoleAlias = newUser.Role.RoleAlias, RoleName = newUser.Role.RoleName }, 
-                    UserCredentials = new UserCredentials { UserMail = newUser.UserCredentials.UserMail } });
+                await Authenticate(newUser);
+
+                return Created(nameof(SignUp), new UserDto(newUser, false));
             }
         }
 
         [AllowAnonymous]
         [HttpPost("login")]
-        public async Task<IActionResult> LogIn([FromBody] UserCredentials userCredentials)
+        public async Task<IActionResult> LogIn([FromBody] UserCredentialsDto userCredentials)
         {
             if (!ModelState.IsValid)
             {
@@ -94,11 +94,11 @@ namespace LuckyMushroom.Controllers
                 .Where((creds) => creds.UserMail == trimmedEmail && creds.UserPasswordHash == trimmedPasswordHash).SingleOrDefault();
             if (authorizedCreds != null)
             {
-                await Authenticate(
-                    authorizedCreds, 
-                    _context.Roles.Where((role) => role.RoleId == _context.Users.Where((user) => user.UserId == authorizedCreds.UserId).Single().RoleId).Single()
-                );
-                return Ok(authorizedCreds.UserMail);
+                User loginUser = _context.Users.Where((user) => user.UserId == authorizedCreds.UserId).Single();
+                loginUser.Role = _context.Roles.Where((role) => role.RoleId == loginUser.RoleId).Single();
+                loginUser.UserCredentials = authorizedCreds;
+                await Authenticate(loginUser);
+                return Ok(new UserDto(loginUser, false));
             }
             else
             {
@@ -133,12 +133,12 @@ namespace LuckyMushroom.Controllers
             return await LogOut();
         }
 
-        private async Task Authenticate(UserCredentials creds, Role role)
+        private async Task Authenticate(User user)
         {
             var claims = new List<Claim>
             {
-                new Claim(ClaimsIdentity.DefaultNameClaimType, creds.UserMail),
-                new Claim(ClaimsIdentity.DefaultRoleClaimType, role.RoleAlias)
+                new Claim(ClaimsIdentity.DefaultNameClaimType, user.UserCredentials.UserMail),
+                new Claim(ClaimsIdentity.DefaultRoleClaimType, user.Role.RoleAlias)
             };
             ClaimsIdentity id = new ClaimsIdentity(claims, "ApplicationCookie", ClaimsIdentity.DefaultNameClaimType, ClaimsIdentity.DefaultRoleClaimType);
             await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, new ClaimsPrincipal(id));

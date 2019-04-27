@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using LuckyMushroom.Models;
 using Microsoft.AspNetCore.Authorization;
+using LuckyMushroom.DataTransferObjects;
 
 namespace LuckyMushroom.Controllers
 {
@@ -56,7 +57,7 @@ namespace LuckyMushroom.Controllers
                 .OrderBy((tag) => Math.Sqrt(Math.Pow(GetNormalizedLatitudeDistance(latitudeSeconds, tag.LatitudeSeconds), 2) + Math.Pow(GetNormalizedLongitudeDistance(longitudeSeconds, tag.LongitudeSeconds), 2)))
                 .FirstOrDefault();
 
-            var articles = nearestGpsTag == null ? null : _context.ArticlesGpsTags.Where((agt) => agt.TagId == nearestGpsTag.TagId).Select((agt) => agt.Article);
+            var articles = nearestGpsTag == null ? null : _context.ArticlesGpsTags.Where((agt) => agt.TagId == nearestGpsTag.TagId).Select((agt) => new ArticleDto(agt.Article));
             return Ok(articles == null ? null : await articles.ToArrayAsync());
         }
 
@@ -88,7 +89,7 @@ namespace LuckyMushroom.Controllers
 
             using (var transaction = _context.Database.BeginTransaction())
             {
-                uint dbTagId = ((await _context.GpsTags.SingleOrDefaultAsync((tag) => tag.LatitudeSeconds == latitude && tag.LongitudeSeconds == longitude))
+                int dbTagId = ((await _context.GpsTags.SingleOrDefaultAsync((tag) => tag.LatitudeSeconds == latitude && tag.LongitudeSeconds == longitude))
                     ?? (await _context.GpsTags.AddAsync(new GpsTag() { LatitudeSeconds = latitude, LongitudeSeconds = longitude })).Entity).TagId;
 
                 Article newArticle = (await _context.Articles.AddAsync(new Article() { ArticleText = articleText })).Entity;

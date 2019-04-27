@@ -5,11 +5,11 @@ namespace LuckyMushroom.DataTransferObjects
 {
     public class UserDto
     {
-        public UserDto(User user)
+        public UserDto(User user, bool shouldSetPassword)
         {
             UserId = user?.UserId;
             Role = new RoleDto(user?.Role);
-            UserCredentials = new UserCredentialsDto(user?.UserCredentials);
+            UserCredentials = new UserCredentialsDto(user?.UserCredentials, shouldSetPassword);
         }
 
         public int? UserId { get; protected set; }
