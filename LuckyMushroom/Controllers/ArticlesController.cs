@@ -24,6 +24,20 @@ namespace LuckyMushroom.Controllers
             MaxLongitudeSeconds = 180 * 60 * 60;
         }
 
+        protected int GetNormalizedLatitudeDistance(int firstLatitudeSeconds, int secondLatitudeSeconds)
+        {
+            int maxLatitudeDistance = MaxLatitudeSeconds * 2;
+            int latitudeDistance = Math.Abs(firstLatitudeSeconds - secondLatitudeSeconds);
+            return Math.Min(latitudeDistance, Math.Abs(maxLatitudeDistance - latitudeDistance));
+        }
+
+        protected int GetNormalizedLongitudeDistance(int firstLongitudeSeconds, int secondLongitudeSeconds)
+        {
+            int maxLongitudeDistance = MaxLongitudeSeconds * 2;
+            int longitudeDistance = Math.Abs(firstLongitudeSeconds - secondLongitudeSeconds);
+            return Math.Min(longitudeDistance, Math.Abs(maxLongitudeDistance - longitudeDistance));
+        }
+
         [HttpGet]
         [AllowAnonymous]
         public async Task<IActionResult> GetArticle(int latitudeSeconds, int longitudeSeconds)
@@ -38,19 +52,12 @@ namespace LuckyMushroom.Controllers
                 return BadRequest("Not existing place");
             }
 
-            int maxLatitudeDistance = MaxLatitudeSeconds * 2, maxLongitudeDistance = MaxLongitudeSeconds * 2;
-            GpsTag nearestGpsTag = (await _context.GpsTags.ToArrayAsync()).OrderBy((tag) =>
-            {
-                int latitudeDistance = Math.Abs(latitudeSeconds - tag.LatitudeSeconds),
-                    longitudeDistance = Math.Abs(longitudeSeconds - tag.LongitudeSeconds);
-                int normalizedLatitudeDistance = Math.Min(latitudeDistance, Math.Abs(maxLatitudeDistance - latitudeDistance)),
-                    normalizedLongitudeDistance = Math.Min(longitudeDistance, Math.Abs(maxLongitudeDistance - longitudeDistance));
-                return Math.Sqrt(Math.Pow(normalizedLatitudeDistance, 2) + Math.Pow(normalizedLongitudeDistance, 2));
-            }).FirstOrDefault();
+            GpsTag nearestGpsTag = _context.GpsTags
+                .OrderBy((tag) => Math.Sqrt(Math.Pow(GetNormalizedLatitudeDistance(latitudeSeconds, tag.LatitudeSeconds), 2) + Math.Pow(GetNormalizedLongitudeDistance(longitudeSeconds, tag.LongitudeSeconds), 2)))
+                .FirstOrDefault();
 
-            var articles = nearestGpsTag == null ? null : nearestGpsTag.ArticlesGpsTags.Select((articleTag) => articleTag.Article);
-
-            return Ok(articles);
+            var articles = nearestGpsTag == null ? null : _context.ArticlesGpsTags.Where((agt) => agt.TagId == nearestGpsTag.TagId).Select((agt) => agt.Article);
+            return Ok(articles == null ? null : await articles.ToArrayAsync());
         }
 
         [HttpPost("add")]
