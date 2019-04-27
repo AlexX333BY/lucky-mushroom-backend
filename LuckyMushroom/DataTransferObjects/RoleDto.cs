@@ -10,7 +10,7 @@ namespace LuckyMushroom.DataTransferObjects
             RoleName = role?.RoleName;
         }
 
-        public string RoleAlias { get; protected set; }
-        public string RoleName { get; protected set; }
+        public string RoleAlias { get; set; }
+        public string RoleName { get; set; }
     }
 }

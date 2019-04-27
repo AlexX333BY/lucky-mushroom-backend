@@ -10,7 +10,7 @@ namespace LuckyMushroom.DataTransferObjects
             LongitudeSeconds = tag?.LongitudeSeconds;
         }
 
-        public int? LatitudeSeconds { get; protected set; }
-        public int? LongitudeSeconds { get; protected set; }
+        public int? LatitudeSeconds { get; set; }
+        public int? LongitudeSeconds { get; set; }
     }
 }

@@ -12,9 +12,9 @@ namespace LuckyMushroom.DataTransferObjects
             UserCredentials = new UserCredentialsDto(user?.UserCredentials, shouldSetPassword);
         }
 
-        public int? UserId { get; protected set; }
+        public int? UserId { get; set; }
 
-        public virtual RoleDto Role { get; protected set; }
-        public virtual UserCredentialsDto UserCredentials { get; protected set; }
+        public virtual RoleDto Role { get; set; }
+        public virtual UserCredentialsDto UserCredentials { get; set; }
     }
 }

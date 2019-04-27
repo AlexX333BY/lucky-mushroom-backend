@@ -9,7 +9,7 @@ namespace LuckyMushroom.DataTransferObjects
             UserMail = creds?.UserMail;
             UserPasswordHash = shouldSetPassword && (creds != null) ? creds.UserPasswordHash : null;
         }
-        public string UserMail { get; protected set; }
-        public string UserPasswordHash { get; protected set; }
+        public string UserMail { get; set; }
+        public string UserPasswordHash { get; set; }
     }
 }
