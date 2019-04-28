@@ -112,7 +112,7 @@ namespace LuckyMushroom.Controllers
             }
         }
 
-        [HttpDelete("delete")]
+        [HttpDelete("{id}/delete")]
         public async Task<IActionResult> DeleteRecognitionRequest(int id)
         {
             if (!ModelState.IsValid)

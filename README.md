@@ -13,16 +13,21 @@ ASP.NET Core backend for Lucky Mushroom app
     - URL paramters: ```id [uint]```
     - return: ```{ articleText [string], articleId [int], gpsTags arrayOf({ latitudeSeconds [int], longitudeSeconds [int] })```
 
-- ```/api/recognitionRequests [GET]``` [TODO - add photos]
+- ```/api/recognitionRequests [GET]```
     - non-required URL paramters: ```edibleStatusAlias [string], recognitionStatusAlias [string]```
-    - return: collection of (```requestId [uint], requestDatetime [datetime], edibleDescription [string], statusName [string]```)
-- ```/api/recognitionRequests [GET]``` [TODO - add photos]
-    - URL parameters: ```id [uint]```
-    - return: ```requestId [uint], requestDatetime [datetime], edibleDescription [string], statusName [string]```
-- ```/api/recognitionRequests/add [POST]``` [TODO]
-- ```/api/recognitionRequests/delete [DELETE]```
-    - URL parameters: ```id [uint]```
-    - return: ```requestId [uint], requestDatetime [datetime], edibleDescription [string], statusName [string]```
+    - return: ```arrayOf({ requestId [int], requestDatetime [datetime], edibleStatus { edibleStatusAlias [string], edibleStatusDescription [string], edibleStatusId [int] }, recognitionStatus { recognitionStatusAlias [string], recognitionStatusName [string], recognitionStatusId [int] }, requestPhotos arrayOf({ photoId [int], photoExtension [string], photoData [string] }) })```
+    - comment: ```photoData``` is Base64 string
+- ```/api/recognitionRequests/{id} [GET]```
+    - URL parameters: ```id [int]```
+    - return: ```{ requestId [int], requestDatetime [datetime], edibleStatus { edibleStatusAlias [string], edibleStatusDescription [string], edibleStatusId [int] }, recognitionStatus { recognitionStatusAlias [string], recognitionStatusName [string], recognitionStatusId [int] }, requestPhotos arrayOf({ photoId [int], photoExtension [string], photoData [string] }) }```
+    - comment: ```photoData``` is Base64 string
+- ```/api/recognitionRequests/add [POST]```
+    - body parameters: ```{ requestDatetime [datetime], edibleStatus { edibleStatusAlias [string] }, recognitionStatus { recognitionStatusAlias [string] }, requestPhotos arrayOf({ photoExtension [string], photoData [string] }) }```
+    - return: ```{ requestId [int], requestDatetime [datetime], edibleStatus { edibleStatusAlias [string], edibleStatusDescription [string], edibleStatusId [int] }, recognitionStatus { recognitionStatusAlias [string], recognitionStatusName [string], recognitionStatusId [int] }, requestPhotos arrayOf({ photoId [int], photoExtension [string], photoData [string] }) }```
+    - comment: ```photoData``` is Base64 string
+- ```/api/recognitionRequests/delete/{id} [DELETE]```
+    - URL parameters: ```id [int]```
+    - return: ```{ requestId [int], requestDatetime [datetime] }```
 
 - ```/api/users/signup [POST]```
     - body parameters: ```{ userMail [string], userPasswordHash [string] }```
