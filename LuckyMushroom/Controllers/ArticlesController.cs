@@ -5,13 +5,15 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using LuckyMushroom.Models;
 using Microsoft.AspNetCore.Authorization;
+using System.Collections.Generic;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using LuckyMushroom.DataTransferObjects;
 
 namespace LuckyMushroom.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize]
+    [Authorize(AuthenticationSchemes = CookieAuthenticationDefaults.AuthenticationScheme)]
     public class ArticlesController : ControllerBase
     {
         private readonly LuckyMushroomContext _context;
@@ -62,7 +64,7 @@ namespace LuckyMushroom.Controllers
         }
 
         [HttpPost("add")]
-        public async Task<IActionResult> AddArticle([FromBody] ArticleGpsTag articleTag)
+        public async Task<IActionResult> AddArticle([FromBody] ArticleDto article)
         {
             if (!ModelState.IsValid)
             {
@@ -74,37 +76,54 @@ namespace LuckyMushroom.Controllers
                 return Forbid();
             }
 
-            int latitude = articleTag.Tag.LatitudeSeconds, longitude = articleTag.Tag.LongitudeSeconds;
-            string articleText = articleTag.Article.ArticleText;
+            string articleText = article.ArticleText;
 
             if (articleText == null)
             {
                 return BadRequest("You should specify article text");
             }
 
-            if ((Math.Abs(latitude) > MaxLatitudeSeconds) || (Math.Abs(longitude) > MaxLongitudeSeconds))
+            if ((article.GpsTags == null) || (article.GpsTags.Length == 0))
             {
-                return BadRequest("Not existing place");
+                return BadRequest("Article should specify at least one place");
+            }
+
+            foreach (GpsTagDto tag in article.GpsTags)
+            {
+                if (!tag.LatitudeSeconds.HasValue || !tag.LongitudeSeconds.HasValue)
+                {
+                    return BadRequest(("Place in unspecified", tag));
+                }
+                if ((Math.Abs(tag.LatitudeSeconds.Value) > MaxLatitudeSeconds) || (Math.Abs(tag.LongitudeSeconds.Value) > MaxLongitudeSeconds))
+                {
+                    return BadRequest(("Not existing place", tag));
+                }
             }
 
             using (var transaction = _context.Database.BeginTransaction())
             {
-                int dbTagId = ((await _context.GpsTags.SingleOrDefaultAsync((tag) => tag.LatitudeSeconds == latitude && tag.LongitudeSeconds == longitude))
-                    ?? (await _context.GpsTags.AddAsync(new GpsTag() { LatitudeSeconds = latitude, LongitudeSeconds = longitude })).Entity).TagId;
+                var newArticle = (await _context.Articles.AddAsync(new Article() { ArticleText = articleText })).Entity;
 
-                Article newArticle = (await _context.Articles.AddAsync(new Article() { ArticleText = articleText })).Entity;
+                List<Task> articleTagAddTasks = new List<Task>(article.GpsTags.Length); 
+                foreach (GpsTagDto tagDto in article.GpsTags)
+                {
+                    int dbTagId = (_context.GpsTags.SingleOrDefault((tag) => (tag.LatitudeSeconds == tagDto.LatitudeSeconds.Value) && (tag.LongitudeSeconds == tagDto.LongitudeSeconds.Value)) 
+                        ?? _context.GpsTags.Add(new GpsTag { LatitudeSeconds = tagDto.LatitudeSeconds.Value, LongitudeSeconds = tagDto.LongitudeSeconds.Value }).Entity).TagId;
 
-                await _context.ArticlesGpsTags.AddAsync(new ArticleGpsTag { ArticleId = newArticle.ArticleId, TagId = dbTagId });
+                    articleTagAddTasks.Add(_context.AddAsync(new ArticleGpsTag { ArticleId = newArticle.ArticleId, TagId = dbTagId }));
+                }
+
+                await Task.WhenAll(articleTagAddTasks);
                 await _context.SaveChangesAsync();
 
                 transaction.Commit();
 
-                return Ok(newArticle);
+                return Ok(new ArticleDto(newArticle));
             }
         }
 
         [HttpDelete("delete")]
-        public async Task<IActionResult> DeleteArticle(uint id)
+        public async Task<IActionResult> DeleteArticle(int id)
         {
             if (!ModelState.IsValid)
             {
@@ -125,7 +144,7 @@ namespace LuckyMushroom.Controllers
             _context.Articles.Remove(article);
             await _context.SaveChangesAsync();
 
-            return Ok(article);
+            return Ok(new ArticleDto(article));
         }
     }
 }
