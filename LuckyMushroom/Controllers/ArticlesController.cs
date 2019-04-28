@@ -55,9 +55,9 @@ namespace LuckyMushroom.Controllers
                 return BadRequest("Not existing place");
             }
 
-            GpsTag nearestGpsTag = _context.GpsTags
+            GpsTag nearestGpsTag = await _context.GpsTags
                 .OrderBy((tag) => Math.Sqrt(Math.Pow(GetNormalizedLatitudeDistance(latitudeSeconds, tag.LatitudeSeconds), 2) + Math.Pow(GetNormalizedLongitudeDistance(longitudeSeconds, tag.LongitudeSeconds), 2)))
-                .FirstOrDefault();
+                .FirstOrDefaultAsync();
 
             var articles = nearestGpsTag == null ? null : _context.ArticlesGpsTags.Where((agt) => agt.TagId == nearestGpsTag.TagId).Select((agt) => new ArticleDto(agt.Article));
             return Ok(articles == null ? null : await articles.ToArrayAsync());
@@ -102,13 +102,13 @@ namespace LuckyMushroom.Controllers
 
             using (var transaction = _context.Database.BeginTransaction())
             {
-                var newArticle = (await _context.Articles.AddAsync(new Article() { ArticleText = articleText })).Entity;
+                var newArticle = (await _context.Articles.AddAsync(new Article { ArticleText = articleText })).Entity;
 
                 List<Task> articleTagAddTasks = new List<Task>(article.GpsTags.Length); 
                 foreach (GpsTagDto tagDto in article.GpsTags)
                 {
-                    int dbTagId = (_context.GpsTags.SingleOrDefault((tag) => (tag.LatitudeSeconds == tagDto.LatitudeSeconds.Value) && (tag.LongitudeSeconds == tagDto.LongitudeSeconds.Value)) 
-                        ?? _context.GpsTags.Add(new GpsTag { LatitudeSeconds = tagDto.LatitudeSeconds.Value, LongitudeSeconds = tagDto.LongitudeSeconds.Value }).Entity).TagId;
+                    int dbTagId = (await _context.GpsTags.SingleOrDefaultAsync((tag) => (tag.LatitudeSeconds == tagDto.LatitudeSeconds.Value) && (tag.LongitudeSeconds == tagDto.LongitudeSeconds.Value)) 
+                        ?? (await _context.GpsTags.AddAsync(new GpsTag { LatitudeSeconds = tagDto.LatitudeSeconds.Value, LongitudeSeconds = tagDto.LongitudeSeconds.Value })).Entity).TagId;
 
                     articleTagAddTasks.Add(_context.AddAsync(new ArticleGpsTag { ArticleId = newArticle.ArticleId, TagId = dbTagId }));
                 }

@@ -49,20 +49,20 @@ namespace LuckyMushroom.Controllers
                         System.InvalidOperationException: "No coercion operator is defined between types 'System.Int16' and 'System.Boolean'."
                     Seems to be Oracle connector problem
                 */
-                if (_context.UserCredentials.ToArray().Any((creds) => creds.UserMail == trimmedEmail))
+                if (await _context.UserCredentials.ToAsyncEnumerable().Any((creds) => creds.UserMail == trimmedEmail))
                 {
                     return BadRequest("Email already exists");
                 }
 
-                Role newUserRole = _context.Roles.Where((role) => role.RoleAlias == "user").FirstOrDefault();
+                Role newUserRole = await _context.Roles.Where((role) => role.RoleAlias == "user").FirstOrDefaultAsync();
                 if (newUserRole == null)
                 {
                     throw new Exception("Error creating user: no needed role");
                 }
 
-                User newUser = _context.Users.Add(new User() { RoleId = newUserRole.RoleId }).Entity;
+                User newUser = (await _context.Users.AddAsync(new User { RoleId = newUserRole.RoleId })).Entity;
                 newUser.Role = newUserRole;
-                newUser.UserCredentials = _context.UserCredentials.Add(new UserCredentials() { UserId = newUser.UserId, UserMail = trimmedEmail, UserPasswordHash = trimmedPasswordHash }).Entity;
+                newUser.UserCredentials = (await _context.UserCredentials.AddAsync(new UserCredentials { UserId = newUser.UserId, UserMail = trimmedEmail, UserPasswordHash = trimmedPasswordHash })).Entity;
 
                 await _context.SaveChangesAsync();
                 transaction.Commit();
@@ -90,12 +90,13 @@ namespace LuckyMushroom.Controllers
                 return BadRequest("Illegal login data");
             }
 
-            UserCredentials authorizedCreds = _context.UserCredentials
-                .Where((creds) => creds.UserMail == trimmedEmail && creds.UserPasswordHash == trimmedPasswordHash).SingleOrDefault();
+            UserCredentials authorizedCreds = await _context.UserCredentials
+                .Where((creds) => creds.UserMail == trimmedEmail && creds.UserPasswordHash == trimmedPasswordHash)
+                .SingleOrDefaultAsync();
             if (authorizedCreds != null)
             {
-                User loginUser = _context.Users.Where((user) => user.UserId == authorizedCreds.UserId).Single();
-                loginUser.Role = _context.Roles.Where((role) => role.RoleId == loginUser.RoleId).Single();
+                User loginUser = await _context.Users.Where((user) => user.UserId == authorizedCreds.UserId).SingleAsync();
+                loginUser.Role = await _context.Roles.Where((role) => role.RoleId == loginUser.RoleId).SingleAsync();
                 loginUser.UserCredentials = authorizedCreds;
                 await Authenticate(loginUser);
                 return Ok(new UserDto(loginUser, false));
@@ -121,7 +122,7 @@ namespace LuckyMushroom.Controllers
                 return BadRequest(ModelState);
             }
 
-            var deletedUser = _context.Users.Where((user) => user.UserCredentials.UserMail == User.Identity.Name).SingleOrDefault();
+            var deletedUser = await _context.Users.Where((user) => user.UserCredentials.UserMail == User.Identity.Name).SingleOrDefaultAsync();
             if (deletedUser == null)
             {
                 return NotFound();
