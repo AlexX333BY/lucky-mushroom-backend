@@ -1,15 +1,19 @@
 ﻿using System.Linq;
 using System.Threading.Tasks;
+using System.Collections.Generic;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using LuckyMushroom.Models;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using LuckyMushroom.DataTransferObjects;
+using LuckyMushroom.Helpers;
 
 namespace LuckyMushroom.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize]
+    [Authorize(AuthenticationSchemes = CookieAuthenticationDefaults.AuthenticationScheme)]
     public class RecognitionRequestsController : ControllerBase
     {
         private readonly LuckyMushroomContext _context;
@@ -19,14 +23,8 @@ namespace LuckyMushroom.Controllers
             _context = context;
         }
 
-        protected virtual object ResponsedRequest(RecognitionRequest request)
-        {
-            /* add photos */
-            return (request.RequestId, request.RequestDatetime, request.EdibleStatus.EdibleDescription, request.Status.StatusName);
-        }
-
         [HttpGet]
-        public async Task<IActionResult> GetRecognitionRequests(string edibleStatusAlias = null, string recognitionStatusAlias = null)
+        public async Task<IActionResult> GetRecognitionRequests(string edibleStatusAlias, string recognitionStatusAlias)
         {
             IQueryable<RecognitionRequest> requests = _context.RecognitionRequests.Where((request) => request.Requester.UserCredentials.UserMail == User.Identity.Name);
 
@@ -40,69 +38,131 @@ namespace LuckyMushroom.Controllers
                 requests = requests.Where((request) => request.Status.StatusAlias == recognitionStatusAlias);
             }
 
-            return Ok((await requests.ToArrayAsync()).Select((request) => ResponsedRequest(request)));
+            RecognitionRequest[] resultRequests = await requests.ToArrayAsync();
+            EdibleStatus[] edibleStatuses = await _context.EdibleStatuses.ToArrayAsync();
+            RecognitionStatus[] recognitionStatuses = await _context.RecognitionStatuses.ToArrayAsync();
+
+            foreach (RecognitionRequest request in resultRequests)
+            {
+                request.RequestPhotos = await _context.RequestPhotos.Where((photo) => photo.RequestId == request.RequestId).ToArrayAsync();
+                request.Status = recognitionStatuses.Single((status) => status.StatusId == request.StatusId);
+                request.EdibleStatus = edibleStatuses.Single((status) => status.EdibleStatusId == request.EdibleStatusId);
+            }
+
+            return Ok(resultRequests.Select((request) => new RecognitionRequestDto(request)).ToArray());
         }
 
-        [HttpGet]
-        public async Task<IActionResult> GetRecognitionRequest(uint id)
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetRecognitionRequest(int id)
         {
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
             }
 
-            RecognitionRequest recognitionRequest = await _context.RecognitionRequests.FindAsync(id);
+            RecognitionRequest recognitionRequest = await _context.RecognitionRequests
+                .Where((request) => (request.RequestId == id) && (request.Requester.UserCredentials.UserMail == User.Identity.Name))
+                .SingleOrDefaultAsync();
 
             if (recognitionRequest == null)
             {
                 return NotFound();
             }
 
-            if (recognitionRequest.Requester.UserCredentials.UserMail != User.Identity.Name)
-            {
-                return Forbid();
-            }
+            recognitionRequest.RequestPhotos = await _context.RequestPhotos.Where((photo) => photo.RequestId == recognitionRequest.RequestId).ToArrayAsync();
+            recognitionRequest.Status = await _context.RecognitionStatuses.FindAsync(recognitionRequest.StatusId);
+            recognitionRequest.EdibleStatus = await _context.EdibleStatuses.FindAsync(recognitionRequest.EdibleStatusId);
 
-            return Ok(ResponsedRequest(recognitionRequest));
+            return Ok(new RecognitionRequestDto(recognitionRequest));
         }
 
         [HttpPost("add")]
-        public async Task<IActionResult> PostRecognitionRequest([FromBody] RecognitionRequest recognitionRequest)
+        public async Task<IActionResult> AddRecognitionRequest([FromBody] RecognitionRequestDto recognitionRequest)
         {
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
             }
 
-            _context.RecognitionRequests.Add(recognitionRequest);
-            await _context.SaveChangesAsync();
+            using (var transaction = _context.Database.BeginTransaction())
+            {
+                if (!IsRequestCorrect(recognitionRequest))
+                {
+                    return BadRequest("Request in incorrect");
+                }
 
-            return CreatedAtAction(nameof(PostRecognitionRequest), new { id = recognitionRequest.RequestId }, ResponsedRequest(recognitionRequest));
+                RecognitionRequest request = (await _context.RecognitionRequests.AddAsync(new RecognitionRequest() {
+                    StatusId = (await _context.RecognitionStatuses.SingleAsync((status) => status.StatusAlias == recognitionRequest.RecognitionStatus.RecognitionStatusAlias)).StatusId,
+                    EdibleStatusId = (await _context.EdibleStatuses.SingleAsync((status) => status.EdibleStatusAlias == recognitionRequest.EdibleStatus.EdibleStatusAlias)).EdibleStatusId,
+                    RequestDatetime = recognitionRequest.RequestDatetime.Value,
+                    RequesterId = (await _context.UserCredentials.SingleAsync((creds) => creds.UserMail == User.Identity.Name)).UserId
+                })).Entity;
+
+                List<Task> photoAdditionTasks = new List<Task>(recognitionRequest.RequestPhotos.Length); 
+                foreach (RequestPhotoDto photo in recognitionRequest.RequestPhotos)
+                {
+                    photoAdditionTasks.Add(_context.AddAsync(new RequestPhoto { RequestId = request.RequestId, PhotoFilename = new RequestPhotoSaver().SavePhoto(photo.PhotoData, photo.PhotoExtension) }));
+                }
+                await Task.WhenAll(photoAdditionTasks);
+
+                await _context.SaveChangesAsync();
+
+                transaction.Commit();
+                return CreatedAtAction(nameof(AddRecognitionRequest), new RecognitionRequestDto(request));
+            }
         }
 
         [HttpDelete("delete")]
-        public async Task<IActionResult> DeleteRecognitionRequest(uint id)
+        public async Task<IActionResult> DeleteRecognitionRequest(int id)
         {
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
             }
 
-            RecognitionRequest recognitionRequest = await _context.RecognitionRequests.FindAsync(id);
+            RecognitionRequest recognitionRequest = await _context.RecognitionRequests
+                .Where((request) => (request.RequestId == id) && (request.Requester.UserCredentials.UserMail == User.Identity.Name))
+                .SingleOrDefaultAsync();
             if (recognitionRequest == null)
             {
                 return NotFound();
-            }
-
-            if (recognitionRequest.Requester.UserCredentials.UserMail != User.Identity.Name)
-            {
-                return Forbid();
             }
 
             _context.RecognitionRequests.Remove(recognitionRequest);
             await _context.SaveChangesAsync();
 
-            return Ok(ResponsedRequest(recognitionRequest));
+            return Ok(new RecognitionRequestDto(recognitionRequest));
+        }
+
+        protected bool IsRequestCorrect(RecognitionRequestDto request)
+        {
+            if (request == null)
+            {
+                return false;
+            }
+
+            if ((request.EdibleStatus == null) || (request.RecognitionStatus == null) || (request.RequestDatetime == null) || (request.RequestPhotos == null)
+                || (request.EdibleStatus.EdibleStatusAlias == null) || (request.RecognitionStatus.RecognitionStatusAlias == null) || (request.RequestPhotos.Length == 0))
+            {
+                return false;
+            }
+
+            if (_context.RecognitionStatuses.Where((status) => status.StatusAlias == request.RecognitionStatus.RecognitionStatusAlias).Count() == 0)
+            {
+                return false;
+            }
+
+            if (_context.EdibleStatuses.Where((status) => status.EdibleStatusAlias == request.EdibleStatus.EdibleStatusAlias).Count() == 0)
+            {
+                return false;
+            }
+
+            if (request.RequestPhotos.Any((photo) => photo.PhotoData == null || photo.PhotoData.Length == 0 || photo.PhotoExtension == null || photo.PhotoExtension.Length == 0))
+            {
+                return false;
+            }
+
+            return true;
         }
     }
 }

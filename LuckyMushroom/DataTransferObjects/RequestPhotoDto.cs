@@ -1,5 +1,6 @@
 using System.IO;
 using LuckyMushroom.Models;
+using LuckyMushroom.Helpers;
 
 namespace LuckyMushroom.DataTransferObjects
 {
@@ -11,7 +12,7 @@ namespace LuckyMushroom.DataTransferObjects
             if (photo?.PhotoFilename != null)
             {
                 PhotoExtension = Path.GetExtension(photo.PhotoFilename);
-                PhotoData = File.ReadAllBytes(photo.PhotoFilename);
+                PhotoData = new RequestPhotoSaver().ReadPhoto(photo.PhotoFilename);
             }
         }
         public int? PhotoId { get; set; }

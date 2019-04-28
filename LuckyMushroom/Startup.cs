@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using LuckyMushroom.Models;
+using LuckyMushroom.Helpers;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.Cookies;
 
@@ -15,6 +16,7 @@ namespace LuckyMushroom
         {
             Configuration = configuration;
             LuckyMushroomContext.ConnectionString = Configuration.GetConnectionString("LuckyMushroomDatabase");
+            RequestPhotoSaver.SaveDirectory = "./photos/";
         }
 
         public IConfiguration Configuration { get; }
