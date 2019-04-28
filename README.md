@@ -5,13 +5,13 @@ ASP.NET Core backend for Lucky Mushroom app
 
 - ```/api/articles [GET]```
     - URL parameters: GPS coorinates ```latitudeSeconds [int], longitudeSeconds [int]```
-    - return: collection of ```(articleId [uint], articleText [string]```)
+    - return: ```arrayOf({ articleText [string], articleId [int], gpsTags arrayOf({ latitudeSeconds [int], longitudeSeconds [int] }) })```
 - ```/api/articles/add [POST]```
-    - body paramters: ```text [string], latitude [int], longitude [int]```
-    - return: ```articleId [uint], articleText [string]```
+    - body paramters: ```{ articleText [string], gpsTags arrayOf({ latitudeSeconds [int], longitudeSeconds [int] }) }```
+    - return: ```{ articleText [string], articleId [int], gpsTags arrayOf({ latitudeSeconds [int], longitudeSeconds [int] }) }```
 - ```/api/articles/delete [DELETE]```
     - URL paramters: ```id [uint]```
-    - return: ```articleId [uint], articleText [string]```
+    - return: ```{ articleText [string], articleId [int], gpsTags arrayOf({ latitudeSeconds [int], longitudeSeconds [int] })```
 
 - ```/api/recognitionRequests [GET]``` [TODO - add photos]
     - non-required URL paramters: ```edibleStatusAlias [string], recognitionStatusAlias [string]```
