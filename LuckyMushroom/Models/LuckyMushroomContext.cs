@@ -241,7 +241,6 @@ namespace LuckyMushroom.Models
                 entity.Property(e => e.PhotoFilename)
                     .IsRequired()
                     .HasColumnName("photo_filename")
-                    .HasMaxLength(128)
                     .IsUnicode(false);
 
                 entity.Property(e => e.RequestId)
