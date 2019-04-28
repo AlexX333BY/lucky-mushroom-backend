@@ -1,0 +1,3 @@
+[submodule "lucky-mushroom-database"]
+	path = lucky-mushroom-database
+	url = https://github.com/AlexX333BY/lucky-mushroom-database.git
