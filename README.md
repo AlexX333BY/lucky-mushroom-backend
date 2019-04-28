@@ -25,10 +25,14 @@ ASP.NET Core backend for Lucky Mushroom app
     - return: ```requestId [uint], requestDatetime [datetime], edibleDescription [string], statusName [string]```
 
 - ```/api/users/signup [POST]```
-    - body parameters: ```email [string], sha512PasswordHash [string]
-    - return: userId [uint], userMail [string]```
-- ```/api/users/login [POST]```
-    - body paramters: ```email [string], sha512PasswordHash [string]```
-    - return: ```userId [uint], userMail [string]```
+    - body parameters: ```{ userMail [string], userPasswordHash [string] }```
+    - comment: hash is SHA-512
+    - return: ```{ userId [int], role { roleAlias [string], roleName [string] }, userCredentials { userMail [string } }```, auth cookie
+- ```/api/users/signup [POST]```
+    - body parameters: ```{ userMail [string], userPasswordHash [string] }```
+    - comment: hash is SHA-512
+    - return: ```{ userId [int], role { roleAlias [string], roleName [string] }, userCredentials { userMail [string } }```, auth cookie
 - ```/api/users/logout [POST]```
+    - comment: auth cookie will be reset
 - ```/api/users/delete [DELETE]```
+    - comment: auth cookie will be reset
