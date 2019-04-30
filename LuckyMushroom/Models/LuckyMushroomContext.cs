@@ -31,11 +31,12 @@ namespace LuckyMushroom.Models
         {
             modelBuilder.HasAnnotation("ProductVersion", "2.2.4-servicing-10062");
 
+            string dbName = Database.GetDbConnection().Database;
             modelBuilder.Entity<Article>(entity =>
             {
                 entity.HasKey(e => e.ArticleId);
 
-                entity.ToTable("articles", "lucky_mushroom");
+                entity.ToTable("articles", dbName);
 
                 entity.HasIndex(e => e.ArticleId)
                     .HasName("IX_article_id")
@@ -55,7 +56,7 @@ namespace LuckyMushroom.Models
             {
                 entity.HasKey(e => new { e.TagId, e.ArticleId });
 
-                entity.ToTable("articles_gps_tags", "lucky_mushroom");
+                entity.ToTable("articles_gps_tags", dbName);
 
                 entity.HasIndex(e => e.TagId)
                     .HasName("IXFK_articles_gps_tags_gps_tags");
@@ -83,7 +84,7 @@ namespace LuckyMushroom.Models
             {
                 entity.HasKey(e => e.EdibleStatusId);
 
-                entity.ToTable("edible_statuses", "lucky_mushroom");
+                entity.ToTable("edible_statuses", dbName);
 
                 entity.HasIndex(e => e.EdibleStatusAlias)
                     .HasName("IX_edible_status_alias")
@@ -113,7 +114,7 @@ namespace LuckyMushroom.Models
             {
                 entity.HasKey(e => e.TagId);
 
-                entity.ToTable("gps_tags", "lucky_mushroom");
+                entity.ToTable("gps_tags", dbName);
 
                 entity.HasIndex(e => e.LatitudeSeconds)
                     .HasName("IX_latitude_seconds");
@@ -142,7 +143,7 @@ namespace LuckyMushroom.Models
             {
                 entity.HasKey(e => e.RequestId);
 
-                entity.ToTable("recognition_requests", "lucky_mushroom");
+                entity.ToTable("recognition_requests", dbName);
 
                 entity.HasIndex(e => e.EdibleStatusId)
                     .HasName("IXFK_recognition_requests_edible_statuses");
@@ -199,7 +200,7 @@ namespace LuckyMushroom.Models
             {
                 entity.HasKey(e => e.StatusId);
 
-                entity.ToTable("recognition_statuses", "lucky_mushroom");
+                entity.ToTable("recognition_statuses", dbName);
 
                 entity.HasIndex(e => e.StatusAlias)
                     .HasName("IX_status_alias")
@@ -229,7 +230,7 @@ namespace LuckyMushroom.Models
             {
                 entity.HasKey(e => e.PhotoId);
 
-                entity.ToTable("request_photos", "lucky_mushroom");
+                entity.ToTable("request_photos", dbName);
 
                 entity.HasIndex(e => e.RequestId)
                     .HasName("IXFK_request_photo_recognition_request");
@@ -258,7 +259,7 @@ namespace LuckyMushroom.Models
             {
                 entity.HasKey(e => e.RoleId);
 
-                entity.ToTable("roles", "lucky_mushroom");
+                entity.ToTable("roles", dbName);
 
                 entity.HasIndex(e => e.RoleAlias)
                     .HasName("IX_role_alias")
@@ -288,7 +289,7 @@ namespace LuckyMushroom.Models
             {
                 entity.HasKey(e => e.UserId);
 
-                entity.ToTable("user_credentials", "lucky_mushroom");
+                entity.ToTable("user_credentials", dbName);
 
                 entity.HasIndex(e => e.UserId)
                     .HasName("IXFK_user_credentials_users")
@@ -325,7 +326,7 @@ namespace LuckyMushroom.Models
             {
                 entity.HasKey(e => e.UserId);
 
-                entity.ToTable("users", "lucky_mushroom");
+                entity.ToTable("users", dbName);
 
                 entity.HasIndex(e => e.RoleId)
                     .HasName("IXFK_users_roles");
