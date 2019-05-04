@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 using Microsoft.AspNetCore.Mvc;
@@ -24,9 +25,14 @@ namespace LuckyMushroom.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetRecognitionRequests(string edibleStatusAlias, string recognitionStatusAlias)
+        public async Task<IActionResult> GetRecognitionRequests(string edibleStatusAlias, string recognitionStatusAlias, DateTime? startDateTime, DateTime? endDateTime)
         {
             IQueryable<RecognitionRequest> requests = _context.RecognitionRequests.Where((request) => request.Requester.UserCredentials.UserMail == User.Identity.Name);
+
+            if ((startDateTime != null) && (endDateTime != null) && (startDateTime.Value > endDateTime.Value))
+            {
+                return BadRequest(nameof(startDateTime) + " > " + nameof(endDateTime));
+            }
 
             if (edibleStatusAlias != null)
             {
@@ -36,6 +42,16 @@ namespace LuckyMushroom.Controllers
             if (recognitionStatusAlias != null)
             {
                 requests = requests.Where((request) => request.Status.StatusAlias == recognitionStatusAlias);
+            }
+
+            if (startDateTime != null)
+            {
+                requests = requests.Where((request) => request.RequestDatetime >= startDateTime.Value);
+            }
+
+            if (endDateTime != null)
+            {
+                requests = requests.Where((request) => request.RequestDatetime <= endDateTime.Value);
             }
 
             RecognitionRequest[] resultRequests = await requests.ToArrayAsync();

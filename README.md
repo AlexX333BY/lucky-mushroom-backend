@@ -14,7 +14,7 @@ ASP.NET Core backend for Lucky Mushroom app
     - return: ```{ articleText [string], articleId [int], gpsTags arrayOf({ latitudeSeconds [int], longitudeSeconds [int] })```
 
 - ```/api/recognitionRequests [GET]```
-    - non-required URL paramters: ```edibleStatusAlias [string], recognitionStatusAlias [string]```
+    - non-required URL paramters: ```edibleStatusAlias [string], recognitionStatusAlias [string], startDateTime [DateTime], endDateTime [DateTime]```
     - return: ```arrayOf({ requestId [int], requestDatetime [datetime], edibleStatus { edibleStatusAlias [string], edibleStatusDescription [string], edibleStatusId [int] }, recognitionStatus { recognitionStatusAlias [string], recognitionStatusName [string], recognitionStatusId [int] }, requestPhotos arrayOf({ photoId [int], photoExtension [string], photoData [string] }) })```
     - comment: ```photoData``` is Base64 string
 - ```/api/recognitionRequests/{id} [GET]```
