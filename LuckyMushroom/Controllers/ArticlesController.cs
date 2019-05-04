@@ -60,7 +60,7 @@ namespace LuckyMushroom.Controllers
                 .FirstOrDefaultAsync();
 
             var articles = nearestGpsTag == null ? null : _context.ArticlesGpsTags.Where((agt) => agt.TagId == nearestGpsTag.TagId).Select((agt) => new ArticleDto(agt.Article));
-            return Ok(articles == null ? null : await articles.ToArrayAsync());
+            return Ok(articles == null ? Array.Empty<ArticleDto>() : await articles.ToArrayAsync());
         }
 
         [HttpPost("add")]
