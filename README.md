@@ -33,7 +33,7 @@ ASP.NET Core backend for Lucky Mushroom app
     - body parameters: ```{ userMail [string], userPasswordHash [string] }```
     - comment: hash is SHA-512
     - return: ```{ userId [int], role { roleAlias [string], roleName [string] }, userCredentials { userMail [string] } }```, auth cookie
-- ```/api/users/signup [POST]```
+- ```/api/users/login [POST]```
     - body parameters: ```{ userMail [string], userPasswordHash [string] }```
     - comment: hash is SHA-512
     - return: ```{ userId [int], role { roleAlias [string], roleName [string] }, userCredentials { userMail [string] } }```, auth cookie
