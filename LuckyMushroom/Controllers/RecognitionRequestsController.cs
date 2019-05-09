@@ -109,7 +109,8 @@ namespace LuckyMushroom.Controllers
 
                 RecognitionRequest request = (await _context.RecognitionRequests.AddAsync(new RecognitionRequest() {
                     StatusId = (await _context.RecognitionStatuses.SingleAsync((status) => status.StatusAlias == recognitionRequest.RecognitionStatus.RecognitionStatusAlias)).StatusId,
-                    EdibleStatusId = (await _context.EdibleStatuses.SingleOrDefaultAsync((status) => status.EdibleStatusAlias == recognitionRequest.EdibleStatus.EdibleStatusAlias))?.EdibleStatusId,
+                    EdibleStatusId = (recognitionRequest.EdibleStatus == null 
+                        ? null : await _context.EdibleStatuses.SingleOrDefaultAsync((status) => status.EdibleStatusAlias == recognitionRequest.EdibleStatus.EdibleStatusAlias))?.EdibleStatusId,
                     RequestDatetime = recognitionRequest.RequestDatetime.Value,
                     RequesterId = (await _context.UserCredentials.SingleAsync((creds) => creds.UserMail == User.Identity.Name)).UserId
                 })).Entity;
@@ -158,8 +159,8 @@ namespace LuckyMushroom.Controllers
                 return false;
             }
 
-            if ((request.EdibleStatus == null) || (request.RecognitionStatus == null) || (request.RequestDatetime == null) || (request.RequestPhotos == null)
-                || (request.RecognitionStatus.RecognitionStatusAlias == null) || !((request.EdibleStatus.EdibleStatusAlias == null) ^ (request.RecognitionStatus.RecognitionStatusAlias != notRecognizedStatus)) || (request.RequestPhotos.Length == 0))
+            if ((request.RecognitionStatus == null) || (request.RequestDatetime == null) || (request.RequestPhotos == null)
+                || (request.RecognitionStatus.RecognitionStatusAlias == null) || !((request.EdibleStatus == null) ^ (request.RecognitionStatus.RecognitionStatusAlias != notRecognizedStatus)) || (request.RequestPhotos.Length == 0))
             {
                 return false;
             }

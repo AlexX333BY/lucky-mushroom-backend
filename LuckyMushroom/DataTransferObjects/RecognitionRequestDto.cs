@@ -11,7 +11,7 @@ namespace LuckyMushroom.DataTransferObjects
         {
             RequestId = request?.RequestId;
             RequestDatetime = request?.RequestDatetime;
-            EdibleStatus = new EdibleStatusDto(request?.EdibleStatus);
+            EdibleStatus = request?.EdibleStatus == null ? null : new EdibleStatusDto(request?.EdibleStatus);
             RecognitionStatus = new RecognitionStatusDto(request?.Status);
             RequestPhotos = request?.RequestPhotos?.Select((photo) => new RequestPhotoDto(photo)).ToArray();
         }
