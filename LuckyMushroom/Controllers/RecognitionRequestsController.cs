@@ -62,7 +62,7 @@ namespace LuckyMushroom.Controllers
             {
                 request.RequestPhotos = await _context.RequestPhotos.Where((photo) => photo.RequestId == request.RequestId).ToArrayAsync();
                 request.Status = recognitionStatuses.Single((status) => status.StatusId == request.StatusId);
-                request.EdibleStatus = edibleStatuses.Single((status) => status.EdibleStatusId == request.EdibleStatusId);
+                request.EdibleStatus = edibleStatuses.SingleOrDefault((status) => status.EdibleStatusId == request.EdibleStatusId);
             }
 
             return Ok(resultRequests.Select((request) => new RecognitionRequestDto(request)).ToArray());
@@ -104,12 +104,12 @@ namespace LuckyMushroom.Controllers
             {
                 if (!IsRequestCorrect(recognitionRequest))
                 {
-                    return BadRequest("Request in incorrect");
+                    return BadRequest("Request is incorrect");
                 }
 
                 RecognitionRequest request = (await _context.RecognitionRequests.AddAsync(new RecognitionRequest() {
                     StatusId = (await _context.RecognitionStatuses.SingleAsync((status) => status.StatusAlias == recognitionRequest.RecognitionStatus.RecognitionStatusAlias)).StatusId,
-                    EdibleStatusId = (await _context.EdibleStatuses.SingleAsync((status) => status.EdibleStatusAlias == recognitionRequest.EdibleStatus.EdibleStatusAlias)).EdibleStatusId,
+                    EdibleStatusId = (await _context.EdibleStatuses.SingleOrDefaultAsync((status) => status.EdibleStatusAlias == recognitionRequest.EdibleStatus.EdibleStatusAlias))?.EdibleStatusId,
                     RequestDatetime = recognitionRequest.RequestDatetime.Value,
                     RequesterId = (await _context.UserCredentials.SingleAsync((creds) => creds.UserMail == User.Identity.Name)).UserId
                 })).Entity;
@@ -152,13 +152,14 @@ namespace LuckyMushroom.Controllers
 
         protected bool IsRequestCorrect(RecognitionRequestDto request)
         {
+            const string notRecognizedStatus = "not-recognized";
             if (request == null)
             {
                 return false;
             }
 
             if ((request.EdibleStatus == null) || (request.RecognitionStatus == null) || (request.RequestDatetime == null) || (request.RequestPhotos == null)
-                || (request.EdibleStatus.EdibleStatusAlias == null) || (request.RecognitionStatus.RecognitionStatusAlias == null) || (request.RequestPhotos.Length == 0))
+                || (request.RecognitionStatus.RecognitionStatusAlias == null) || !((request.EdibleStatus.EdibleStatusAlias == null) ^ (request.RecognitionStatus.RecognitionStatusAlias != notRecognizedStatus)) || (request.RequestPhotos.Length == 0))
             {
                 return false;
             }
@@ -168,7 +169,7 @@ namespace LuckyMushroom.Controllers
                 return false;
             }
 
-            if (_context.EdibleStatuses.Where((status) => status.EdibleStatusAlias == request.EdibleStatus.EdibleStatusAlias).Count() == 0)
+            if ((request.RecognitionStatus.RecognitionStatusAlias != notRecognizedStatus) && (_context.EdibleStatuses.Where((status) => status.EdibleStatusAlias == request.EdibleStatus.EdibleStatusAlias).Count() == 0))
             {
                 return false;
             }
