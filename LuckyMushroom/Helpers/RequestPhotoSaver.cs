@@ -26,7 +26,7 @@ namespace LuckyMushroom.Helpers
         {
             byte[] fileHash = new SHA1Managed().ComputeHash(photo);
             string filename = SaveDirectory + DateTime.UtcNow.ToString("s") + '_' 
-                + string.Concat(fileHash.Select(b => b.ToString("x2"))) + extension;
+                + string.Concat(fileHash.Select(b => b.ToString("x2"))) + (extension.StartsWith('.') ? "" : ".") + extension;
             File.WriteAllBytes(filename, photo);
             return filename;
         }
