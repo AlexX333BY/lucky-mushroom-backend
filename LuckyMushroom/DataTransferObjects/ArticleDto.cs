@@ -11,9 +11,11 @@ namespace LuckyMushroom.DataTransferObjects
             ArticleText = article?.ArticleText;
             GpsTags = article?.ArticlesGpsTags?.Select((agt) => new GpsTagDto(agt.Tag)).ToArray();
             ArticleId = article?.ArticleId;
+            ArticleTitle = article?.ArticleTitle;
         }
 
         public string ArticleText { get; set; }
+        public string ArticleTitle { get; set; }
         public int? ArticleId { get; set; }
         public GpsTagDto[] GpsTags { get; set; }
     }

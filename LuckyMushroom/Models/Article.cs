@@ -11,6 +11,7 @@ namespace LuckyMushroom.Models
 
         public int ArticleId { get; set; }
         public string ArticleText { get; set; }
+        public string ArticleTitle { get; set; }
 
         public virtual ICollection<ArticleGpsTag> ArticlesGpsTags { get; set; }
     }

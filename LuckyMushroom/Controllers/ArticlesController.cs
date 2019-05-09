@@ -83,6 +83,13 @@ namespace LuckyMushroom.Controllers
                 return BadRequest("You should specify article text");
             }
 
+            string articleTitle = article.ArticleTitle;
+
+            if (articleTitle == null)
+            {
+                return BadRequest("You should specify article title");
+            }
+
             if ((article.GpsTags == null) || (article.GpsTags.Length == 0))
             {
                 return BadRequest("Article should specify at least one place");
@@ -102,7 +109,7 @@ namespace LuckyMushroom.Controllers
 
             using (var transaction = _context.Database.BeginTransaction())
             {
-                var newArticle = (await _context.Articles.AddAsync(new Article { ArticleText = articleText })).Entity;
+                var newArticle = (await _context.Articles.AddAsync(new Article { ArticleText = articleText, ArticleTitle = articleTitle })).Entity;
 
                 List<Task> articleTagAddTasks = new List<Task>(article.GpsTags.Length); 
                 foreach (GpsTagDto tagDto in article.GpsTags)

@@ -50,6 +50,11 @@ namespace LuckyMushroom.Models
                     .IsRequired()
                     .HasColumnName("article_text")
                     .IsUnicode(false);
+                    
+                entity.Property(e => e.ArticleTitle)
+                    .IsRequired()
+                    .HasColumnName("article_title")
+                    .IsUnicode(false);
             });
 
             modelBuilder.Entity<ArticleGpsTag>(entity =>
