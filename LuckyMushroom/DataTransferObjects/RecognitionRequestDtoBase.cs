@@ -1,19 +1,16 @@
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using LuckyMushroom.Models;
 
 namespace LuckyMushroom.DataTransferObjects
 {
-    public class RecognitionRequestDto
+    public abstract class RecognitionRequestDtoBase
     {
-        public RecognitionRequestDto(RecognitionRequest request)
+        public RecognitionRequestDtoBase(RecognitionRequest request)
         {
             RequestId = request?.RequestId;
             RequestDatetime = request?.RequestDatetime;
             EdibleStatus = request?.EdibleStatus == null ? null : new EdibleStatusDto(request?.EdibleStatus);
             RecognitionStatus = new RecognitionStatusDto(request?.Status);
-            RequestPhotos = request?.RequestPhotos?.Select((photo) => new RequestPhotoDto(photo)).ToArray();
         }
 
         public int? RequestId { get; set; }
@@ -21,6 +18,5 @@ namespace LuckyMushroom.DataTransferObjects
 
         public EdibleStatusDto EdibleStatus { get; set; }
         public RecognitionStatusDto RecognitionStatus { get; set; }
-        public RequestPhotoDto[] RequestPhotos { get; set; }
     }
 }

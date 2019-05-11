@@ -65,7 +65,11 @@ namespace LuckyMushroom.Controllers
                 request.EdibleStatus = edibleStatuses.SingleOrDefault((status) => status.EdibleStatusId == request.EdibleStatusId);
             }
 
-            return Ok(resultRequests.Select((request) => new RecognitionRequestDto(request)).ToArray());
+            return Ok(resultRequests.Select((request) => 
+                request.RequestPhotos.Count > 1 
+                    ? (RecognitionRequestDtoBase) new RecognitionRequestWithMultiplePhotosDto(request) 
+                    : new RecognitionRequestWithSinglePhotoDto(request)
+            ).ToArray());
         }
 
         [HttpGet("{id}")]
@@ -89,11 +93,14 @@ namespace LuckyMushroom.Controllers
             recognitionRequest.Status = await _context.RecognitionStatuses.FindAsync(recognitionRequest.StatusId);
             recognitionRequest.EdibleStatus = await _context.EdibleStatuses.FindAsync(recognitionRequest.EdibleStatusId);
 
-            return Ok(new RecognitionRequestDto(recognitionRequest));
+            return Ok(recognitionRequest.RequestPhotos.Count > 1 
+                ? (RecognitionRequestDtoBase) new RecognitionRequestWithMultiplePhotosDto(recognitionRequest) 
+                : new RecognitionRequestWithSinglePhotoDto(recognitionRequest)
+            );
         }
 
-        [HttpPost("add")]
-        public async Task<IActionResult> AddRecognitionRequest([FromBody] RecognitionRequestDto recognitionRequest)
+        [HttpPost("addFew")]
+        public async Task<IActionResult> AddRecognitionRequestWithMultiplePhotos([FromBody] RecognitionRequestWithMultiplePhotosDto recognitionRequest)
         {
             if (!ModelState.IsValid)
             {
@@ -118,14 +125,50 @@ namespace LuckyMushroom.Controllers
                 List<Task> photoAdditionTasks = new List<Task>(recognitionRequest.RequestPhotos.Length); 
                 foreach (RequestPhotoDto photo in recognitionRequest.RequestPhotos)
                 {
-                    photoAdditionTasks.Add(_context.AddAsync(new RequestPhoto { RequestId = request.RequestId, PhotoFilename = new RequestPhotoSaver().SavePhoto(photo.PhotoData, photo.PhotoExtension) }));
+                    photoAdditionTasks.Add(_context.RequestPhotos.AddAsync(new RequestPhoto {
+                        RequestId = request.RequestId, PhotoFilename = new RequestPhotoSaver().SavePhoto(photo.PhotoData, photo.PhotoExtension)
+                    }));
                 }
                 await Task.WhenAll(photoAdditionTasks);
 
                 await _context.SaveChangesAsync();
 
                 transaction.Commit();
-                return CreatedAtAction(nameof(AddRecognitionRequest), new RecognitionRequestDto(request));
+                return CreatedAtAction(nameof(AddRecognitionRequestWithMultiplePhotos), new RecognitionRequestWithMultiplePhotosDto(request));
+            }
+        }
+
+        [HttpPost("add")]
+        public async Task<IActionResult> AddRecognitionRequestWithSinglePhoto([FromBody] RecognitionRequestWithSinglePhotoDto recognitionRequest)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            using (var transaction = _context.Database.BeginTransaction())
+            {
+                if (!IsRequestCorrect(recognitionRequest))
+                {
+                    return BadRequest("Request is incorrect");
+                }
+
+                RecognitionRequest request = (await _context.RecognitionRequests.AddAsync(new RecognitionRequest() {
+                    StatusId = (await _context.RecognitionStatuses.SingleAsync((status) => status.StatusAlias == recognitionRequest.RecognitionStatus.RecognitionStatusAlias)).StatusId,
+                    EdibleStatusId = (recognitionRequest.EdibleStatus == null 
+                        ? null : await _context.EdibleStatuses.SingleOrDefaultAsync((status) => status.EdibleStatusAlias == recognitionRequest.EdibleStatus.EdibleStatusAlias))?.EdibleStatusId,
+                    RequestDatetime = recognitionRequest.RequestDatetime.Value,
+                    RequesterId = (await _context.UserCredentials.SingleAsync((creds) => creds.UserMail == User.Identity.Name)).UserId
+                })).Entity;
+
+                await _context.RequestPhotos.AddAsync(new RequestPhoto {
+                    RequestId = request.RequestId, 
+                    PhotoFilename = new RequestPhotoSaver().SavePhoto(recognitionRequest.RequestPhoto.PhotoData, recognitionRequest.RequestPhoto.PhotoExtension) 
+                });
+                await _context.SaveChangesAsync();
+
+                transaction.Commit();
+                return CreatedAtAction(nameof(AddRecognitionRequestWithSinglePhoto), new RecognitionRequestWithSinglePhotoDto(request));
             }
         }
 
@@ -148,10 +191,13 @@ namespace LuckyMushroom.Controllers
             _context.RecognitionRequests.Remove(recognitionRequest);
             await _context.SaveChangesAsync();
 
-            return Ok(new RecognitionRequestDto(recognitionRequest));
+            return Ok(recognitionRequest.RequestPhotos.Count > 1 
+                ? (RecognitionRequestDtoBase) new RecognitionRequestWithMultiplePhotosDto(recognitionRequest) 
+                : new RecognitionRequestWithSinglePhotoDto(recognitionRequest)
+            );
         }
 
-        protected bool IsRequestCorrect(RecognitionRequestDto request)
+        protected bool IsRequestCorrect(RecognitionRequestDtoBase request)
         {
             const string notRecognizedStatus = "not-recognized";
             if (request == null)
@@ -159,8 +205,8 @@ namespace LuckyMushroom.Controllers
                 return false;
             }
 
-            if ((request.RecognitionStatus == null) || (request.RequestDatetime == null) || (request.RequestPhotos == null)
-                || (request.RecognitionStatus.RecognitionStatusAlias == null) || !((request.EdibleStatus == null) ^ (request.RecognitionStatus.RecognitionStatusAlias != notRecognizedStatus)) || (request.RequestPhotos.Length == 0))
+            if ((request.RecognitionStatus == null) || (request.RequestDatetime == null)
+                || (request.RecognitionStatus.RecognitionStatusAlias == null) || !((request.EdibleStatus == null) ^ (request.RecognitionStatus.RecognitionStatusAlias != notRecognizedStatus)))
             {
                 return false;
             }
@@ -175,7 +221,24 @@ namespace LuckyMushroom.Controllers
                 return false;
             }
 
-            if (request.RequestPhotos.Any((photo) => photo.PhotoData == null || photo.PhotoData.Length == 0 || photo.PhotoExtension == null || photo.PhotoExtension.Length == 0))
+            if (request is RecognitionRequestWithSinglePhotoDto)
+            {
+                RequestPhotoDto photo = (request as RecognitionRequestWithSinglePhotoDto).RequestPhoto;
+                if (photo?.PhotoData == null || photo.PhotoData.Length == 0 || photo.PhotoExtension == null || photo.PhotoExtension.Length == 0)
+                {
+                    return false;
+                }
+            }
+            else if (request is RecognitionRequestWithMultiplePhotosDto)
+            {
+                var castedRequest = request as RecognitionRequestWithMultiplePhotosDto;
+                if ((castedRequest.RequestPhotos == null) || (castedRequest.RequestPhotos.Count() == 0) 
+                    || castedRequest.RequestPhotos.Any((photo) => photo?.PhotoData == null || photo.PhotoData.Length == 0 || photo.PhotoExtension == null || photo.PhotoExtension.Length == 0))
+                {
+                    return false;
+                }
+            }
+            else
             {
                 return false;
             }
