@@ -1,6 +1,19 @@
 # lucky-mushroom-backend
 ASP.NET Core backend for Lucky Mushroom app
 
+## How to run
+1. Compile source with `dotnet build` command or just download and unpack compiled release
+2. Deploy database with `mysql dbWithLuckyMushroomTables < lucky_mushroom_database.sql` command (replace `dbWithLuckyMushroomTables` with your database name)
+3. In folder where release was unpacked, create `appsettings.json` file with such content (all the values are for example)
+   ```json
+   {
+     "ConnectionStrings": {
+       "LuckyMushroomDatabase": "server=localhost;user=yourDbUserName;password=yourDbUserPassword;database=dbWithLuckyMushroomTables"
+     }
+   }
+   ```
+4. Run server with `dotnet run LuckyMushroom.dll` command
+
 ## API schema
 
 - ```/api/articles [GET]```
